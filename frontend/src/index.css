@@ -1,1 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --color-gruvbox-bg: #282828;
+    --color-gruvbox-panel: #3c3836;
+    --color-gruvbox-fg: #ebdbb2;
+    --color-gruvbox-gray: #a89984;
+    --color-gruvbox-primary: #fe8019;
+    --color-gruvbox-accent: #b8bb26;
+    --color-gruvbox-error: #fb4934;
+}
+
+@layer base {
+    body {
+    background-color: var(--color-gruvbox-bg);
+    color: var(--color-gruvbox-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    }
+}
