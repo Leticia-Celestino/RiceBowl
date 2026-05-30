@@ -3,13 +3,15 @@ import { MainLayout } from './layouts/MainLayout';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login'; 
 import { Upload } from './pages/Upload';
-import { CommandPalette } from './components/ui/CommandPalette'; // <-- Import da Paleta
+import { CommandPalette } from './components/ui/CommandPalette'; 
+import { FastfetchBoot } from './components/ui/FastfetchBoot';
 
 const ExplorePlaceholder = () => <div className="text-gruvbox-primary font-mono text-xl">$ grep -r "minimalist" /rices</div>;
 
 function App() {
   return (
     <>
+      <FastfetchBoot />
       <CommandPalette /> 
 
       <Routes>
