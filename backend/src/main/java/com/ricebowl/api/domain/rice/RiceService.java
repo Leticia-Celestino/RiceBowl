@@ -83,5 +83,25 @@ public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.Mult
     
     // O Hibernate salva automaticamente por causa do @Transactional
     return new RiceDetailDTO(rice);
+    }
+
+    @Transactional
+    public RiceDetailDTO uploadConfig(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
+    // 1. Busca o Rice
+    var rice = riceRepository.findById(id)
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+
+    // 2. Valida se o usuário é o dono
+    if (!rice.getUser().getId().equals(user.getId())) {
+        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+    }
+
+    // 3. Faz o upload (O FileService vai manter a extensão .tar.gz ou .zip automaticamente!)
+    String configUrl = fileService.upload(file);
+
+    // 4. Salva a URL dos dotfiles
+    rice.setConfigUrl(configUrl);
+    
+    return new RiceDetailDTO(rice);
 }
 }

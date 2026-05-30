@@ -74,4 +74,14 @@ public class RiceController {
     var response = riceService.uploadCover(id, file, user);
     return ResponseEntity.ok(response);
     }
+
+    @PatchMapping(value = "/{id}/config", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RiceDetailDTO> uploadConfig(
+        @PathVariable UUID id,
+        @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+        @AuthenticationPrincipal User user
+    ) {
+    var response = riceService.uploadConfig(id, file, user);
+    return ResponseEntity.ok(response);
+}
 }
