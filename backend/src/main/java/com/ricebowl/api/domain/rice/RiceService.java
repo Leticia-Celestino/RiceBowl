@@ -12,6 +12,8 @@ import com.ricebowl.api.domain.tag.Tag;
 import com.ricebowl.api.domain.tag.TagRepository;
 import com.ricebowl.api.domain.user.User;
 import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+import com.ricebowl.api.domain.file.FileService;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ public class RiceService {
 
     private final RiceRepository riceRepository;
     private final TagRepository tagRepository;
+    private final FileService fileService;
 
     @Transactional
     public RiceDetailDTO create(RiceCreateDTO data, User user) {
@@ -60,4 +63,25 @@ public class RiceService {
 
         riceRepository.delete(rice);
     }
+
+    @Transactional
+public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
+    // 1. Busca o Rice no banco
+    var rice = riceRepository.findById(id)
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+
+    // 2. Trava de segurança: só o dono pode alterar a foto
+    if (!rice.getUser().getId().equals(user.getId())) {
+        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+    }
+
+    // 3. Faz o upload para o MinIO
+    String coverUrl = fileService.upload(file);
+
+    // 4. Atualiza o banco de dados com o link gerado
+    rice.setCoverUrl(coverUrl);
+    
+    // O Hibernate salva automaticamente por causa do @Transactional
+    return new RiceDetailDTO(rice);
+}
 }
