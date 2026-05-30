@@ -1,3 +1,4 @@
+// src/types/rice.ts
 export interface UserDTO {
     id: string;
     nickname: string;
@@ -8,10 +9,14 @@ export interface RiceDTO {
     id: string;
     title: string;
     description: string;
-    coverImageUrl?: string;
+    distro: string;
+    windowManager: string;
+    coverUrl?: string | null;  
+    configUrl?: string | null; 
+    authorNickname: string;    
     tags: string[];
-    author: UserDTO;
     createdAt: string;
+    gallery?: string[];
 }
 
 export interface PageResponse<T> {

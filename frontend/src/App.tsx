@@ -1,9 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
 import { Home } from './pages/Home';
-import { Login } from './pages/Login'; // <- Importe aqui
+import { Login } from './pages/Login'; 
+import { Upload } from './pages/Upload';
 
-const UploadPlaceholder = () => <div className="text-gruvbox-primary font-mono text-xl">$ ./upload_rice.sh</div>;
 const ExplorePlaceholder = () => <div className="text-gruvbox-primary font-mono text-xl">$ grep -r "minimalist" /rices</div>;
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<ExplorePlaceholder />} />
-        <Route path="/upload" element={<UploadPlaceholder />} />
+        <Route path="/upload" element={<Upload />} /> 
       </Route>
 
       {/* Rota de Login usando o componente real */}
