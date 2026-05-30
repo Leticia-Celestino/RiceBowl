@@ -52,4 +52,15 @@ public class Rice {
 
     @OneToMany(mappedBy = "rice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RiceImage> gallery = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_rice_id")
+    private Rice parentRice;
+
+    @org.hibernate.annotations.Formula("(SELECT COALESCE(SUM(v.vote_value), 0) FROM rice_votes v WHERE v.rice_id = id)")
+    private Long karma;
+
+    @OneToMany(mappedBy = "rice", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
+    private java.util.List<Comment> comments = new java.util.ArrayList<>();
 }

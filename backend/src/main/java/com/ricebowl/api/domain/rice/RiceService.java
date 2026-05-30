@@ -1,5 +1,6 @@
 package com.ricebowl.api.domain.rice;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ricebowl.api.domain.rice.dto.RiceCreateDTO;
 import com.ricebowl.api.domain.rice.dto.RiceDetailDTO;
+import com.ricebowl.api.domain.rice.dto.CommentDTO;
 import com.ricebowl.api.domain.tag.Tag;
 import com.ricebowl.api.domain.tag.TagRepository;
 import com.ricebowl.api.domain.user.User;
@@ -23,6 +25,8 @@ public class RiceService {
     private final TagRepository tagRepository;
     private final FileService fileService;
     private final RiceImageRepository riceImageRepository;
+    private final RiceVoteRepository voteRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public RiceDetailDTO create(RiceCreateDTO data, User user) {
@@ -67,69 +71,93 @@ public class RiceService {
 
     @Transactional
     public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
-    // 1. Busca o Rice no banco
-    var rice = riceRepository.findById(id)
-            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+        var rice = riceRepository.findById(id)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
-    // 2. Trava de segurança: só o dono pode alterar a foto
-    if (!rice.getUser().getId().equals(user.getId())) {
-        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
-    }
+        if (!rice.getUser().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+        }
 
-    // 3. Faz o upload para o MinIO
-    String coverUrl = fileService.upload(file);
-
-    // 4. Atualiza o banco de dados com o link gerado
-    rice.setCoverUrl(coverUrl);
-    
-    // O Hibernate salva automaticamente por causa do @Transactional
-    return new RiceDetailDTO(rice);
+        String coverUrl = fileService.upload(file);
+        rice.setCoverUrl(coverUrl);
+        
+        return new RiceDetailDTO(rice);
     }
 
     @Transactional
     public RiceDetailDTO uploadConfig(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
-    // 1. Busca o Rice
-    var rice = riceRepository.findById(id)
-            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+        var rice = riceRepository.findById(id)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
-    // 2. Valida se o usuário é o dono
-    if (!rice.getUser().getId().equals(user.getId())) {
-        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
-    }
+        if (!rice.getUser().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+        }
 
-    // 3. Faz o upload (O FileService vai manter a extensão .tar.gz ou .zip automaticamente!)
-    String configUrl = fileService.upload(file);
-
-    // 4. Salva a URL dos dotfiles
-    rice.setConfigUrl(configUrl);
-    
-    return new RiceDetailDTO(rice);
+        String configUrl = fileService.upload(file);
+        rice.setConfigUrl(configUrl);
+        
+        return new RiceDetailDTO(rice);
     }
 
     @Transactional
     public RiceDetailDTO addImageToGallery(UUID id, org.springframework.web.multipart.MultipartFile file, String description, User user) {
-    // 1. Busca o Rice principal
-    var rice = riceRepository.findById(id)
-            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+        var rice = riceRepository.findById(id)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
-    // 2. Trava de segurança (só o dono pode adicionar imagens)
-    if (!rice.getUser().getId().equals(user.getId())) {
-        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+        if (!rice.getUser().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+        }
+
+        String imageUrl = fileService.upload(file);
+
+        RiceImage novaImagem = new RiceImage();
+        novaImagem.setRice(rice);
+        novaImagem.setUrl(imageUrl);
+        novaImagem.setDescription(description);
+
+        riceImageRepository.save(novaImagem);
+
+        return new RiceDetailDTO(rice);
     }
 
-    // 3. Faz o upload da imagem para o MinIO
-    String imageUrl = fileService.upload(file);
+    @Transactional
+    public Long voteRice(UUID riceId, Short value, User user) {
+        Rice rice = riceRepository.findById(riceId)
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
-    // 4. Cria a nova entidade RiceImage
-    RiceImage novaImagem = new RiceImage();
-    novaImagem.setRice(rice);
-    novaImagem.setUrl(imageUrl);
-    novaImagem.setDescription(description);
+        Optional<RiceVote> existingVote = voteRepository.findByRiceIdAndUserId(riceId, user.getId());
 
-    // 5. Salva a nova imagem no banco
-    riceImageRepository.save(novaImagem);
+        if (existingVote.isPresent()) {
+            RiceVote vote = existingVote.get();
+            if (vote.getVoteValue().equals(value)) {
+                voteRepository.delete(vote);
+            } else {
+                vote.setVoteValue(value);
+                voteRepository.save(vote);
+            }
+        } else {
+            RiceVote newVote = new RiceVote();
+            newVote.setId(new RiceVote.RiceVoteId(rice.getId(), user.getId()));
+            newVote.setRice(rice);
+            newVote.setUser(user);
+            newVote.setVoteValue(value);
+            
+            voteRepository.save(newVote);
+        }
 
-    // O Hibernate e o DTO cuidarão de retornar o Rice atualizado com a galeria!
-    return new RiceDetailDTO(rice);
-}
+        return voteRepository.calculateTotalKarmaByRiceId(riceId);
+    }
+
+    @Transactional
+    public void addComment(UUID riceId, CommentDTO dto, User user) {
+        Rice rice = riceRepository.findById(riceId)
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+
+        Comment comment = new Comment();
+        comment.setContent(dto.content());
+        comment.setRice(rice);
+        comment.setAuthor(user);
+        
+        commentRepository.save(comment);
+    }
 }

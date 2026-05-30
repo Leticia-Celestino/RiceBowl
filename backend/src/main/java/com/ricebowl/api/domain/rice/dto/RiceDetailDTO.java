@@ -1,23 +1,25 @@
 package com.ricebowl.api.domain.rice.dto;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
 import com.ricebowl.api.domain.rice.Rice;
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public record RiceDetailDTO(
-    UUID id,
-    String title,
-    String description,
-    String distro,
-    String windowManager,
-    String coverUrl,
-    String configUrl,
-    LocalDateTime createdAt,
-    String authorNickname,
-    List<String> tags,
-    List<RiceImageDTO> gallery
+        UUID id,
+        String title,
+        String description,
+        String distro,
+        String windowManager,
+        String coverUrl,
+        String configUrl,
+        String authorNickname,
+        Set<String> tags,
+        Long karma, 
+        List<CommentResponseDTO> comments, 
+        LocalDateTime createdAt
 ) {
     public RiceDetailDTO(Rice rice) {
         this(
@@ -28,10 +30,11 @@ public record RiceDetailDTO(
             rice.getWindowManager(),
             rice.getCoverUrl(),
             rice.getConfigUrl(),
-            rice.getCreatedAt(),
             rice.getUser().getNickname(),
-            rice.getTags().stream().map(tag -> tag.getName()).toList(),
-            rice.getGallery().stream().map(RiceImageDTO::new).toList()
+            rice.getTags().stream().map(tag -> tag.getName()).collect(Collectors.toSet()),
+            rice.getKarma() != null ? rice.getKarma() : 0L, 
+            rice.getComments() != null ? rice.getComments().stream().map(CommentResponseDTO::new).toList() : List.of(), 
+            rice.getCreatedAt()
         );
     }
 }
