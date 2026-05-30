@@ -14,7 +14,14 @@ import com.ricebowl.api.domain.user.dto.UserResponseDTO;
 public class UserController {
 
     @GetMapping("/me")
-    public ResponseEntity getMe(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(new UserResponseDTO(user.getId(), user.getNickname(), user.getEmail(), user.getBio()));
+    public ResponseEntity<UserResponseDTO> getMe(@AuthenticationPrincipal User user) {
+        var response = new UserResponseDTO(
+                user.getId(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getBio()
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

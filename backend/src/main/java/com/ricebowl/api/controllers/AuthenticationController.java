@@ -33,7 +33,7 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
@@ -43,11 +43,11 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid RegisterDTO data){
-        // aqui verifica se o email já existe
-        if(this.repository.findByEmail(data.email()) != null) return ResponseEntity.badRequest().build();
+    public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data) {
+        if (this.repository.findByEmail(data.email()) != null) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        // encripta a senha com o BCrypt antes de salvar
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
         User newUser = new User(data.nickname(), data.email(), encryptedPassword);
 
