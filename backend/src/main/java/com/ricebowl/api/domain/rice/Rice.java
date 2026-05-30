@@ -7,9 +7,11 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.List;
 
 @Entity(name = "Rice")
 @Table(name = "rices")
@@ -47,4 +49,7 @@ public class Rice {
         inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private Set<Tag> tags = new HashSet<>();
+
+    @OneToMany(mappedBy = "rice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RiceImage> gallery = new ArrayList<>();
 }

@@ -83,5 +83,16 @@ public class RiceController {
     ) {
     var response = riceService.uploadConfig(id, file, user);
     return ResponseEntity.ok(response);
-}
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RiceDetailDTO> addImageToGallery(
+        @PathVariable UUID id,
+        @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+        @RequestParam(value = "description", required = false) String description,
+        @AuthenticationPrincipal User user
+    ) {
+    var response = riceService.addImageToGallery(id, file, description, user);
+    return ResponseEntity.ok(response);
+    }
 }

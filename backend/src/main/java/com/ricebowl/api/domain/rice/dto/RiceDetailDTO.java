@@ -16,7 +16,8 @@ public record RiceDetailDTO(
     String configUrl,
     LocalDateTime createdAt,
     String authorNickname,
-    List<String> tags
+    List<String> tags,
+    List<RiceImageDTO> gallery
 ) {
     public RiceDetailDTO(Rice rice) {
         this(
@@ -29,7 +30,8 @@ public record RiceDetailDTO(
             rice.getConfigUrl(),
             rice.getCreatedAt(),
             rice.getUser().getNickname(),
-            rice.getTags().stream().map(tag -> tag.getName()).toList()
+            rice.getTags().stream().map(tag -> tag.getName()).toList(),
+            rice.getGallery().stream().map(RiceImageDTO::new).toList()
         );
     }
 }

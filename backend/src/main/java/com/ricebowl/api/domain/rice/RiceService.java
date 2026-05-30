@@ -22,6 +22,7 @@ public class RiceService {
     private final RiceRepository riceRepository;
     private final TagRepository tagRepository;
     private final FileService fileService;
+    private final RiceImageRepository riceImageRepository;
 
     @Transactional
     public RiceDetailDTO create(RiceCreateDTO data, User user) {
@@ -65,7 +66,7 @@ public class RiceService {
     }
 
     @Transactional
-public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
+    public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.MultipartFile file, User user) {
     // 1. Busca o Rice no banco
     var rice = riceRepository.findById(id)
             .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
@@ -102,6 +103,33 @@ public RiceDetailDTO uploadCover(UUID id, org.springframework.web.multipart.Mult
     // 4. Salva a URL dos dotfiles
     rice.setConfigUrl(configUrl);
     
+    return new RiceDetailDTO(rice);
+    }
+
+    @Transactional
+    public RiceDetailDTO addImageToGallery(UUID id, org.springframework.web.multipart.MultipartFile file, String description, User user) {
+    // 1. Busca o Rice principal
+    var rice = riceRepository.findById(id)
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
+
+    // 2. Trava de segurança (só o dono pode adicionar imagens)
+    if (!rice.getUser().getId().equals(user.getId())) {
+        throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
+    }
+
+    // 3. Faz o upload da imagem para o MinIO
+    String imageUrl = fileService.upload(file);
+
+    // 4. Cria a nova entidade RiceImage
+    RiceImage novaImagem = new RiceImage();
+    novaImagem.setRice(rice);
+    novaImagem.setUrl(imageUrl);
+    novaImagem.setDescription(description);
+
+    // 5. Salva a nova imagem no banco
+    riceImageRepository.save(novaImagem);
+
+    // O Hibernate e o DTO cuidarão de retornar o Rice atualizado com a galeria!
     return new RiceDetailDTO(rice);
 }
 }
