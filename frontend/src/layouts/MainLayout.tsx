@@ -1,9 +1,12 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, SquareTerminal, Hash } from 'lucide-react';
 import { Avatar } from '../components/ui/Avatar';
+import { useAuth } from '../features/auth/useAuth';
+import { LogOut } from 'lucide-react';
 
 export function MainLayout() {
-    const location = useLocation()
+    const location = useLocation();
+    const { user, isAuthenticated, logout } = useAuth();
 
     const navItems = [
     { icon: <Home size={20} />, label: 'Home', path: '/' },
@@ -57,18 +60,34 @@ export function MainLayout() {
 
         {/* Perfil no Rodapé */}
         <div className="px-2 sm:px-4 mt-auto">
-            <Link
-            to="/login"
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-gruvbox-gray hover:bg-gruvbox-gray/10 hover:text-gruvbox-fg transition-colors"
+            {isAuthenticated ? (
+            <button
+                type="button"
+                className="w-full flex items-center justify-between px-3 py-3 rounded-lg hover:bg-gruvbox-gray/10 transition-colors group cursor-pointer text-left"
+                onClick={logout}
             >
-            <Avatar alt="Letícia" size="sm" />
-            <div className="hidden sm:flex flex-col">
-                <span className="font-mono text-xs text-gruvbox-fg">@leticia</span>
-                <span className="text-[10px] text-gruvbox-accent uppercase tracking-wider">
-                Online
+                <div className="flex items-center gap-3">
+                <Avatar alt={user?.nickname || 'User'} size="sm" />
+                <div className="hidden sm:flex flex-col">
+                    <span className="font-mono text-xs text-gruvbox-fg">@{user?.nickname}</span>
+                    <span className="text-[10px] text-gruvbox-accent uppercase tracking-wider">Online</span>
+                </div>
+                </div>
+                <span title="Sair">
+                    <LogOut
+                    size={16}
+                    className="text-gruvbox-gray hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
                 </span>
-            </div>
+            </button>
+            ) : (
+            <Link to="/login" className="flex items-center gap-3 px-3 py-3 rounded-lg text-gruvbox-gray hover:bg-gruvbox-primary/10 hover:text-gruvbox-primary transition-colors">
+                <div className="w-8 h-8 rounded-full border border-dashed border-gruvbox-gray flex items-center justify-center shrink-0">
+                <span className="font-mono text-xs">?</span>
+                </div>
+                <span className="hidden sm:block font-mono text-sm">Fazer Login</span>
             </Link>
+            )}
         </div>
         </aside>
 
