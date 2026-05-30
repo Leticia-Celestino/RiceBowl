@@ -2,6 +2,7 @@ import type { RiceDTO } from '../../types/rice';
 import { GlassPanel } from './GlassPanel';
 import { Avatar } from './Avatar';
 import { Tag } from './Tag';
+import { Download } from 'lucide-react'; 
 
 interface RiceCardProps {
     rice: RiceDTO;
@@ -40,7 +41,6 @@ export function RiceCard({ rice }: RiceCardProps) {
                         </span>
                     )}
                 </div>
-
                 <div className="flex items-center justify-between mt-2 pt-3 border-t border-gruvbox-gray/10">
                     <div className="flex items-center gap-2">
                         <Avatar 
@@ -52,6 +52,18 @@ export function RiceCard({ rice }: RiceCardProps) {
                             @{rice.authorNickname || 'unknown'}
                         </span>
                     </div>
+                    {rice.configUrl && (
+                        <a 
+                            href={rice.configUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()} 
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gruvbox-primary text-gruvbox-bg font-mono text-xs font-bold rounded hover:bg-gruvbox-primary/80 transition-colors"
+                        >
+                            <Download size={14} />
+                            dotfiles
+                        </a>
+                    )}
                 </div>
             </div>
             
