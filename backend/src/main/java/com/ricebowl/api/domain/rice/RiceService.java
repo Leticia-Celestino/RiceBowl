@@ -2,20 +2,23 @@ package com.ricebowl.api.domain.rice;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.ricebowl.api.domain.file.FileService;
+import com.ricebowl.api.domain.rice.dto.CommentDTO;
 import com.ricebowl.api.domain.rice.dto.RiceCreateDTO;
 import com.ricebowl.api.domain.rice.dto.RiceDetailDTO;
-import com.ricebowl.api.domain.rice.dto.CommentDTO;
 import com.ricebowl.api.domain.tag.Tag;
 import com.ricebowl.api.domain.tag.TagRepository;
 import com.ricebowl.api.domain.user.User;
+
 import lombok.RequiredArgsConstructor;
-import java.util.UUID;
-import com.ricebowl.api.domain.file.FileService;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +50,9 @@ public class RiceService {
         return new RiceDetailDTO(rice);
     }
 
-    public Page<RiceDetailDTO> findAll(Pageable pageable) {
-        return riceRepository.findAll(pageable).map(RiceDetailDTO::new);
+    public Page<RiceDetailDTO> findAll(String search, String distro, String windowManager, Pageable pageable) {
+        return riceRepository.searchRices(search, distro, windowManager, pageable)
+                .map(RiceDetailDTO::new);
     }
 
     public RiceDetailDTO findById(java.util.UUID id) {

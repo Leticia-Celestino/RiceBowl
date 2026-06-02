@@ -1,50 +1,131 @@
-import { useState } from 'react';
-import { useRices } from '../features/rices/useRices';
+import { useState, useEffect } from 'react';
+import { Search, Filter } from 'lucide-react';
 import { RiceCard } from '../components/ui/RiceCard';
 import { RiceModal } from '../components/ui/RiceModal';
-import { Loader } from '../components/ui/Loader';
-import { ServerCrash } from 'lucide-react';
-import type { RiceDTO } from '../types/rice';
+import type { RiceDTO, PageResponse } from '../types/rice';
 
 export function Home() {
+    const [rices, setRices] = useState<RiceDTO[]>([]);
     const [selectedRice, setSelectedRice] = useState<RiceDTO | null>(null);
-    const { data: rices, isLoading, isError } = useRices();
+    
+    const [search, setSearch] = useState('');
+    const [distroFilter, setDistroFilter] = useState('');
+    const [wmFilter, setWmFilter] = useState('');
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const fetchRices = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams();
+                
+                if (search.trim()) params.append('search', search.trim());
+                if (distroFilter.trim()) params.append('distro', distroFilter.trim());
+                if (wmFilter.trim()) params.append('windowManager', wmFilter.trim());
+
+                const response = await fetch(`http://localhost:8080/rices?${params.toString()}`, {
+                    signal: controller.signal,
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (response.ok) {
+                    const data: PageResponse<RiceDTO> = await response.json();
+                    setRices(data.content);
+                } else {
+                    console.error("Erro na API. Status:", response.status);
+                }
+            } catch (error) {
+                if ((error as DOMException).name !== 'AbortError') {
+                    console.error("Erro de conexão ao buscar setups:", error);
+                }
+            }
+        };
+
+        // DEBOUNCE: Aguarda 300ms sem o usuário digitar para finalmente fazer a chamada na API
+        const delayDebounceFn = setTimeout(() => {
+            void fetchRices();
+        }, 300);
+
+        return () => {
+            clearTimeout(delayDebounceFn); // Cancela o timer se o usuário digitar algo novo
+            controller.abort(); // Cancela a requisição fantasma
+        };
+    }, [search, distroFilter, wmFilter]);
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3 border-b border-gruvbox-gray/20 pb-4">
-                <span className="text-gruvbox-primary font-mono text-xl">~ /</span>
-                <h1 className="text-2xl font-mono font-bold text-gruvbox-fg">feed</h1>
-            </div>
-            {isLoading && (
-                <div className="flex justify-center py-20">
-                    <Loader className="text-lg scale-150" />
+        <div className="flex flex-col gap-6 p-6 h-full overflow-y-auto w-full relative">
+            
+            <div className="bg-gruvbox-bg/50 backdrop-blur-md border border-gruvbox-gray/20 rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center sticky top-0 z-10 shadow-md">
+                <div className="relative flex-grow w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder="Busque por título ou descrição..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-10 pr-4 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans"
+                    />
                 </div>
-            )}
 
-            {isError && (
-                <div className="flex flex-col items-center justify-center py-20 gap-4 text-gruvbox-error">
-                    <ServerCrash size={48} />
-                    <p className="font-mono text-sm">Falha na conexão. O servidor Java pode estar dormindo.</p>
-                </div>
-            )}
-            {!isLoading && !isError && rices?.length === 0 && (
-                <div className="text-center py-20 font-mono text-gruvbox-gray">
-                    O diretório está vazio. Seja a primeira a dar upload de um Rice!
-                </div>
-            )}
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-                {rices?.map((rice) => (
-                    <div key={rice.id} onClick={() => setSelectedRice(rice)}>
-                        <RiceCard rice={rice} />
+                <div className="flex gap-2 w-full md:w-auto">
+                    <div className="relative flex-grow md:flex-grow-0">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
+                        <select 
+                            value={distroFilter}
+                            onChange={(e) => setDistroFilter(e.target.value)}
+                            className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
+                        >
+                            <option value="">Qualquer Distro</option>
+                            <option value="Arch Linux">Arch Linux</option>
+                            <option value="Ubuntu">Ubuntu</option>
+                            <option value="Fedora">Fedora</option>
+                            <option value="Debian">Debian</option>
+                            <option value="Zorin">Zorin OS</option>
+                        </select>
                     </div>
-                ))}
-            </div>
-            <RiceModal 
-                rice={selectedRice} 
-                onClose={() => setSelectedRice(null)} 
-            />
 
+                    <div className="relative flex-grow md:flex-grow-0">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
+                        <select 
+                            value={wmFilter}
+                            onChange={(e) => setWmFilter(e.target.value)}
+                            className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
+                        >
+                            <option value="">Qualquer WM/DE</option>
+                            <option value="Hyprland">Hyprland</option>
+                            <option value="i3wm">i3wm</option>
+                            <option value="GNOME">GNOME</option>
+                            <option value="KDE Plasma">KDE Plasma</option>
+                            <option value="bspwm">bspwm</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {rices.length === 0 ? (
+                <div className="text-center py-20 text-gruvbox-gray font-mono">
+                    Nenhum setup encontrado para estes filtros.
+                </div>
+            ) : (
+                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+                    {rices.map((rice) => (
+                        // AVISO CSS: O break-inside-avoid impede o card de ser rasgado ao meio nas colunas
+                        <div 
+                            key={rice.id} 
+                            onClick={() => setSelectedRice(rice)}
+                            className="break-inside-avoid cursor-pointer hover:opacity-95 transition-opacity"
+                        >
+                            <RiceCard rice={rice} />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {selectedRice && (
+                <RiceModal rice={selectedRice} onClose={() => setSelectedRice(null)} />
+            )}
+            
         </div>
     );
 }
