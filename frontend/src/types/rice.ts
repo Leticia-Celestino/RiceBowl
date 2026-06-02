@@ -11,12 +11,13 @@ export interface RiceDTO {
     description: string;
     distro: string;
     windowManager: string;
-    coverUrl?: string | null;  
-    configUrl?: string | null; 
-    authorNickname: string;    
+    coverUrl: string;
+    configUrl?: string;
+    authorNickname: string;
     tags: string[];
     createdAt: string;
-    gallery?: string[];
+    karma: number;
+    comments?: CommentDTO[]; 
 }
 
 export interface PageResponse<T> {
@@ -26,3 +27,11 @@ export interface PageResponse<T> {
     size: number;
     number: number;
 }
+
+export interface CommentDTO {
+    id: string;
+    content: string;
+    authorNickname: string;
+    createdAt: string;
+}
+
