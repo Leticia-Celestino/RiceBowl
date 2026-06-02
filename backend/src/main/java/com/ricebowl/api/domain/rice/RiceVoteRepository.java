@@ -13,4 +13,7 @@ public interface RiceVoteRepository extends JpaRepository<RiceVote, RiceVote.Ric
     
     @Query("SELECT COALESCE(SUM(v.voteValue), 0L) FROM RiceVote v WHERE v.rice.id = :riceId")
     Long calculateTotalKarmaByRiceId(@Param("riceId") UUID riceId);
+
+    @Query("SELECT COALESCE(SUM(v.voteValue), 0L) FROM RiceVote v WHERE v.rice.user.id = :userId")
+    Long calculateTotalKarmaByUserId(@Param("userId") UUID userId);
 }

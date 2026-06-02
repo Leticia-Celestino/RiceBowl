@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import type { SyntheticEvent } from 'react';
 import { X, Download, Monitor, Cpu, Calendar, Send, User } from 'lucide-react';
 import type { RiceDTO, CommentDTO } from '../../types/rice';
 import { GlassPanel } from './GlassPanel';
@@ -43,16 +42,13 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`http://localhost:8080/rices/${rice.id}/comments`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
                     signal: controller.signal,
                 });
 
                 if (!response.ok) return;
 
                 const data = await response.json();
-
                 const fetchedComments = Array.isArray(data) ? data : (data.content || []);
 
                 setCommentsState({
@@ -66,10 +62,10 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
             }
         };
 
-        fetchComments();
+        void fetchComments();
 
         return () => controller.abort();
-    }, [rice?.id]);
+    }, [rice?.id]); 
 
     if (!rice) return null;
 
@@ -81,7 +77,7 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
     const newComment =
         draftState.riceId === rice.id ? draftState.text : '';
 
-    const handleCommentSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
+    const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (!newComment.trim() || isSubmitting) return;
@@ -93,7 +89,7 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
             const response = await fetch(`http://localhost:8080/rices/${rice.id}/comments`, {
                 method: 'POST',
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ content: newComment }),

@@ -34,6 +34,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/rices").permitAll() 
                         .requestMatchers(HttpMethod.GET, "/rices/**").permitAll() 
+                        .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
                         
                         .anyRequest().authenticated()
                 )

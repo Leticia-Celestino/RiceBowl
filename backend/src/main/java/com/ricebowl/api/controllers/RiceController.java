@@ -52,9 +52,10 @@ public class RiceController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String distro,
             @RequestParam(required = false) String windowManager,
+            @RequestParam(required = false) String author, 
             @PageableDefault(size = 10, sort = {"createdAt"}) Pageable pageable
     ) {
-        var page = riceService.findAll(search, distro, windowManager, pageable);
+        var page = riceService.findAll(search, distro, windowManager, author, pageable);
         return ResponseEntity.ok(page);
     }
 

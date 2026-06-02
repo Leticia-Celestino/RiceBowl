@@ -50,8 +50,8 @@ public class RiceService {
         return new RiceDetailDTO(rice);
     }
 
-    public Page<RiceDetailDTO> findAll(String search, String distro, String windowManager, Pageable pageable) {
-        return riceRepository.searchRices(search, distro, windowManager, pageable)
+    public Page<RiceDetailDTO> findAll(String search, String distro, String windowManager, String author, Pageable pageable) {
+        return riceRepository.searchRices(search, distro, windowManager, author, pageable)
                 .map(RiceDetailDTO::new);
     }
 
