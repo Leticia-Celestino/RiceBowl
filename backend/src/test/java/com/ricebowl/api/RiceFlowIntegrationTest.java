@@ -31,6 +31,22 @@ class RiceFlowIntegrationTest {
     private MockMvc mvc;
 
     @Test
+    void currentUserRequiresAuthentication() throws Exception {
+        mvc.perform(get("/users/me"))
+                .andExpect(status().isUnauthorized());
+
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String email = "me-" + suffix + "@example.test";
+        register("me" + suffix, email);
+        String token = login(email);
+
+        mvc.perform(get("/users/me")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email));
+    }
+
+    @Test
     void publicationRemainsDraftUntilBothFilesAndEnforcesOwnership() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String authorEmail = "author-" + suffix + "@example.test";

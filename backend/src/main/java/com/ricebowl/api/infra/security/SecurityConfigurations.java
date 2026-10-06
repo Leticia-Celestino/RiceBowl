@@ -60,6 +60,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/rices").permitAll() 
                         .requestMatchers(HttpMethod.GET, "/rices/**").permitAll() 
+                        .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         
