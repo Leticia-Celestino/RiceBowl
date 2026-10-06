@@ -4,35 +4,35 @@ Os itens abaixo são pequenos o suficiente para uma pull request. A ordem indica
 
 ## P0 — segurança e confiabilidade
 
-### 1. Rejeitar conteúdo incompatível com a extensão
+### 1. ✅ Rejeitar conteúdo incompatível com a extensão
 
 **Escopo:** validar a assinatura binária de PNG, JPEG, WEBP, GIF, ZIP, GZIP e XZ, sem confiar apenas em `Content-Type` ou nome.
 
-**Aceite:** arquivo renomeado é rejeitado com HTTP 400; formatos válidos continuam aceitos; testes cobrem cada assinatura.
+**Aceite:** arquivo renomeado é rejeitado com HTTP 400; formatos válidos continuam aceitos; testes cobrem as assinaturas implementadas.
 
-### 2. Impedir path traversal e archive bombs
+### 2. ✅ Impedir path traversal e archive bombs
 
 **Escopo:** inspecionar entradas do arquivo compactado, bloquear caminhos absolutos/`..`, links e limites abusivos de quantidade e tamanho descompactado.
 
 **Aceite:** pacotes maliciosos são rejeitados antes da publicação; limites são configuráveis; existem testes com fixtures hostis.
 
-### 3. Detectar segredos no pacote de dotfiles
+### 3. ◐ Detectar segredos no pacote de dotfiles
 
 **Escopo:** executar scanner em quarentena antes de disponibilizar o download e retornar achados sem expor o segredo.
 
-**Aceite:** tokens/chaves de teste bloqueiam a publicação; falso positivo pode ser removido pelo autor; status aparece na API.
+**Aceite:** tokens/chaves de alta confiança bloqueiam o upload; falso positivo e status de análise ainda precisam de quarentena e fluxo de revisão.
 
-### 4. Tornar publicação e uploads um único fluxo recuperável
+### 4. ◐ Tornar publicação e uploads um único fluxo recuperável
 
 **Escopo:** criar estado `DRAFT`/`PROCESSING`/`PUBLISHED` e expirar rascunhos incompletos, substituindo a compensação feita somente pelo frontend.
 
-**Aceite:** falha ou abandono não deixa publicação visível nem arquivos órfãos; limpeza automática possui teste.
+**Aceite:** falha ou abandono não deixa publicação visível; o MVP possui limpeza automática de drafts, mas ainda falta pipeline transacional assíncrono para eliminar toda possibilidade de órfão.
 
-### 5. Cobrir autorização e ownership
+### 5. ✅ Cobrir autorização e ownership
 
 **Escopo:** testes de integração para criar, alterar arquivos, votar, comentar e excluir como autor, outro usuário e anônimo.
 
-**Aceite:** matriz esperada de 200/201/204/401/403/404 passa na CI.
+**Aceite:** matriz crítica de 200/201/204/401/403/404 passa no teste de integração; a cobertura de casos adicionais continua no backlog.
 
 ## P1 — núcleo social
 

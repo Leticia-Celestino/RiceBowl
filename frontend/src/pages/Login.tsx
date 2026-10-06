@@ -28,8 +28,9 @@ export function Login() {
                 await api.post('/auth/register', { nickname, email, password });
             }
             const response = await api.post('/auth/login', { email, password });
-            const { token, user } = response.data;
-            login(token, user);
+            const { user } = response.data;
+            await api.get('/auth/csrf');
+            login(user);
             navigate('/');
         } catch {
             // Apenas removemos o (err) daqui!

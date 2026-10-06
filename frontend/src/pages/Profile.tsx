@@ -5,6 +5,7 @@ import { RiceCard } from '../components/ui/RiceCard';
 import { RiceModal } from '../components/ui/RiceModal';
 import type { RiceDTO, PageResponse } from '../types/rice';
 import { api } from '../config/api';
+import { useAuth } from '../features/auth/useAuth';
 
 interface UserProfileDTO {
     id: string;
@@ -54,7 +55,7 @@ export function Profile() {
                 setRices(ricesRes.data.content);
 
                 // 3. Checa se o usuário logado é o dono do perfil
-                if (localStorage.getItem('@ricebowl:token')) {
+                if (useAuth.getState().isAuthenticated) {
                     const meRes = await api.get('/users/me', {
                         signal: controller.signal,
                     });

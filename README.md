@@ -26,9 +26,10 @@ docker compose up --build
 Serviços:
 
 - Web: <http://localhost:5173>
-- API: <http://localhost:8080>
+- API direta para desenvolvimento: <http://localhost:8080>
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
-O Compose cria automaticamente volumes persistentes para o banco e para os uploads.
+
+A web funciona como origem única: chamadas `/api/*` e arquivos `/uploads/*` são encaminhados pelo Nginx para a API. O Compose cria automaticamente volumes persistentes para o banco e para os uploads.
 
 ## Desenvolvimento sem containers da aplicação
 
@@ -67,13 +68,16 @@ Os testes do backend usam H2 em memória e não exigem um PostgreSQL local. Test
 Funcional:
 
 - autenticação JWT e cadastro;
+- sessão web em cookie HttpOnly com proteção CSRF;
 - feed público com busca, filtros e paginação incremental;
 - perfis e rices por autor;
 - upload validado de imagem e arquivo ZIP/TAR;
+- inspeção de assinatura, traversal, links, expansão excessiva e segredos de alta confiança em arquivos compactados;
 - votos com rollback visual em falha;
 - comentários públicos e autenticados para escrita;
 - exclusão do rice pelo autor;
 - ambiente completo por Docker Compose;
+- estados de publicação `DRAFT`/`PUBLISHED` e limpeza de rascunhos abandonados;
 - CI para frontend, backend e configuração Compose.
 
 Planejado:

@@ -17,7 +17,7 @@ public class LocalObjectStorage implements ObjectStorage {
 
     public LocalObjectStorage(
             @Value("${storage.local.path:./data/uploads}") String path,
-            @Value("${storage.public-base-url:http://localhost:8080}") String publicBaseUrl) {
+            @Value("${storage.public-base-url:}") String publicBaseUrl) {
         this.root = Path.of(path).toAbsolutePath().normalize();
         this.publicBaseUrl = publicBaseUrl.replaceAll("/$", "");
     }

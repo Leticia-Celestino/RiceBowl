@@ -8,15 +8,25 @@ import com.ricebowl.api.domain.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Service
 public class TokenService {
 
     @Value("${api.security.token.secret}")
     private String secret;
+
+    @Value("${api.security.token.expiration:PT2H}")
+    private Duration expiration;
+
+    @PostConstruct
+    void validateConfiguration() {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT secret must contain at least 32 characters");
+        }
+    }
 
     public String generateToken(User user) {
         try {
@@ -45,6 +55,6 @@ public class TokenService {
     }
 
     private Instant genExpirationDate() {
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+        return Instant.now().plus(expiration);
     }
 }

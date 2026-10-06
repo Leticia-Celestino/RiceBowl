@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ricebowl.api.domain.rice.RiceRepository;
+import com.ricebowl.api.domain.rice.RiceStatus;
 import com.ricebowl.api.domain.rice.RiceVoteRepository;
 import com.ricebowl.api.domain.user.User;
 import com.ricebowl.api.domain.user.UserRepository;
@@ -42,7 +43,7 @@ public class UserController {
         User user = userRepository.findByNicknameIgnoreCase(nickname)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Usuário não encontrado"));
         Long totalKarma = riceVoteRepository.calculateTotalKarmaByUserId(user.getId());
-        Long count = riceRepository.countByUserId(user.getId());
+        Long count = riceRepository.countByUserIdAndStatus(user.getId(), RiceStatus.PUBLISHED);
         var profile = new UserProfileDTO(
                 user.getId(), 
                 user.getNickname(), 

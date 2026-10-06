@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.ricebowl.api.domain.file.FileService;
 import com.ricebowl.api.domain.rice.dto.CommentDTO;
@@ -34,6 +38,9 @@ public class RiceService {
     private final RiceVoteRepository voteRepository;
     private final CommentRepository commentRepository;
 
+    @Value("${app.draft-retention:PT24H}")
+    private Duration draftRetention;
+
     @Transactional
     public RiceDetailDTO create(RiceCreateDTO data, User user) {
         Set<Tag> tags = data.tags().stream()
@@ -55,7 +62,7 @@ public class RiceService {
 
     @Transactional(readOnly = true)
     public Page<RiceSummaryDTO> findAll(String search, String distro, String windowManager, String author, Pageable pageable) {
-        return riceRepository.searchRices(search, distro, windowManager, author, pageable)
+        return riceRepository.searchRices(RiceStatus.PUBLISHED, search, distro, windowManager, author, pageable)
                 .map(RiceSummaryDTO::new);
     }
 
@@ -75,9 +82,7 @@ public class RiceService {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission to delete this rice");
         }
 
-        fileService.deleteByUrl(rice.getCoverUrl());
-        fileService.deleteByUrl(rice.getConfigUrl());
-        rice.getGallery().forEach(image -> fileService.deleteByUrl(image.getUrl()));
+        deleteStoredFiles(rice);
         riceRepository.delete(rice);
     }
 
@@ -93,6 +98,7 @@ public class RiceService {
         String previousCover = rice.getCoverUrl();
         String coverUrl = fileService.uploadImage(file);
         rice.setCoverUrl(coverUrl);
+        publishWhenComplete(rice);
         fileService.deleteByUrl(previousCover);
         
         return new RiceDetailDTO(rice);
@@ -110,6 +116,7 @@ public class RiceService {
         String previousConfig = rice.getConfigUrl();
         String configUrl = fileService.uploadArchive(file);
         rice.setConfigUrl(configUrl);
+        publishWhenComplete(rice);
         fileService.deleteByUrl(previousConfig);
         
         return new RiceDetailDTO(rice);
@@ -191,5 +198,28 @@ public class RiceService {
                 .stream()
                 .map(CommentResponseDTO::new)
                 .toList();
+    }
+
+    @Transactional
+    @Scheduled(
+            fixedDelayString = "${app.draft-cleanup-interval-ms:3600000}",
+            initialDelayString = "${app.draft-cleanup-initial-delay-ms:60000}")
+    public void cleanupExpiredDrafts() {
+        var cutoff = LocalDateTime.now().minus(draftRetention);
+        var drafts = riceRepository.findByStatusAndCreatedAtBefore(RiceStatus.DRAFT, cutoff);
+        drafts.forEach(this::deleteStoredFiles);
+        riceRepository.deleteAll(drafts);
+    }
+
+    private void publishWhenComplete(Rice rice) {
+        if (rice.getCoverUrl() != null && rice.getConfigUrl() != null) {
+            rice.setStatus(RiceStatus.PUBLISHED);
+        }
+    }
+
+    private void deleteStoredFiles(Rice rice) {
+        fileService.deleteByUrl(rice.getCoverUrl());
+        fileService.deleteByUrl(rice.getConfigUrl());
+        rice.getGallery().forEach(image -> fileService.deleteByUrl(image.getUrl()));
     }
 }

@@ -34,6 +34,10 @@ public class Rice {
     private String coverUrl;
     private String configUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RiceStatus status = RiceStatus.DRAFT;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
