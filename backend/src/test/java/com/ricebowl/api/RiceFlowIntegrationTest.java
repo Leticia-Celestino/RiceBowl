@@ -8,8 +8,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import com.jayway.jsonpath.JsonPath;
+import jakarta.servlet.http.Cookie;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -38,10 +40,10 @@ class RiceFlowIntegrationTest {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String email = "me-" + suffix + "@example.test";
         register("me" + suffix, email);
-        String token = login(email);
+        Cookie session = login(email);
 
         mvc.perform(get("/users/me")
-                        .header("Authorization", bearer(token)))
+                        .cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email));
     }
@@ -53,16 +55,18 @@ class RiceFlowIntegrationTest {
         String otherEmail = "other-" + suffix + "@example.test";
         register("author" + suffix, authorEmail);
         register("other" + suffix, otherEmail);
-        String authorToken = login(authorEmail);
-        String otherToken = login(otherEmail);
+        Cookie authorSession = login(authorEmail);
+        Cookie otherSession = login(otherEmail);
 
         mvc.perform(post("/rices")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ricePayload()))
                 .andExpect(status().isUnauthorized());
 
         String created = mvc.perform(post("/rices")
-                        .header("Authorization", bearer(authorToken))
+                        .with(csrf())
+                        .cookie(authorSession)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ricePayload()))
                 .andExpect(status().isCreated())
@@ -77,7 +81,8 @@ class RiceFlowIntegrationTest {
         var cover = new MockMultipartFile("file", "cover.png", "image/png", png);
         mvc.perform(multipart(HttpMethod.PATCH, "/rices/{id}/cover", riceId)
                         .file(cover)
-                        .header("Authorization", bearer(authorToken)))
+                        .with(csrf())
+                        .cookie(authorSession))
                 .andExpect(status().isOk());
 
         mvc.perform(get("/rices"))
@@ -87,7 +92,8 @@ class RiceFlowIntegrationTest {
                 "file", "dotfiles.zip", "application/zip", safeZip());
         mvc.perform(multipart(HttpMethod.PATCH, "/rices/{id}/config", riceId)
                         .file(config)
-                        .header("Authorization", bearer(authorToken)))
+                        .with(csrf())
+                        .cookie(authorSession))
                 .andExpect(status().isOk());
 
         mvc.perform(get("/rices"))
@@ -95,11 +101,13 @@ class RiceFlowIntegrationTest {
                 .andExpect(jsonPath("$.content[*].id", hasItem(riceId)));
 
         mvc.perform(delete("/rices/{id}", riceId)
-                        .header("Authorization", bearer(otherToken)))
+                        .with(csrf())
+                        .cookie(otherSession))
                 .andExpect(status().isForbidden());
 
         mvc.perform(delete("/rices/{id}", riceId)
-                        .header("Authorization", bearer(authorToken)))
+                        .with(csrf())
+                        .cookie(authorSession))
                 .andExpect(status().isNoContent());
 
         mvc.perform(get("/rices/{id}", riceId))
@@ -108,22 +116,25 @@ class RiceFlowIntegrationTest {
 
     private void register(String nickname, String email) throws Exception {
         mvc.perform(post("/auth/register")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nickname":"%s","email":"%s","password":"test-pass-123"}
                                 """.formatted(nickname, email)))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
-    private String login(String email) throws Exception {
-        String response = mvc.perform(post("/auth/login")
+    private Cookie login(String email) throws Exception {
+        var response = mvc.perform(post("/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"email":"%s","password":"test-pass-123"}
                                 """.formatted(email)))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return JsonPath.read(response, "$.token");
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andReturn().getResponse();
+        return response.getCookie("ricebowl_session");
     }
 
     private String ricePayload() {
@@ -141,9 +152,5 @@ class RiceFlowIntegrationTest {
             zip.closeEntry();
         }
         return output.toByteArray();
-    }
-
-    private String bearer(String token) {
-        return "Bearer " + token;
     }
 }

@@ -57,20 +57,20 @@ public class RiceService {
         rice.setTags(tags);
 
         riceRepository.save(rice);
-        return new RiceDetailDTO(rice);
+        return detail(rice);
     }
 
     @Transactional(readOnly = true)
     public Page<RiceSummaryDTO> findAll(String search, String distro, String windowManager, String author, Pageable pageable) {
         return riceRepository.searchRices(RiceStatus.PUBLISHED, search, distro, windowManager, author, pageable)
-                .map(RiceSummaryDTO::new);
+                .map(rice -> new RiceSummaryDTO(rice, fileService::publicUrl));
     }
 
     @Transactional(readOnly = true)
     public RiceDetailDTO findById(java.util.UUID id) {
         var rice = riceRepository.findById(id)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
-        return new RiceDetailDTO(rice);
+        return detail(rice);
     }
 
     @Transactional
@@ -101,7 +101,7 @@ public class RiceService {
         publishWhenComplete(rice);
         fileService.deleteByUrl(previousCover);
         
-        return new RiceDetailDTO(rice);
+        return detail(rice);
     }
 
     @Transactional
@@ -119,7 +119,7 @@ public class RiceService {
         publishWhenComplete(rice);
         fileService.deleteByUrl(previousConfig);
         
-        return new RiceDetailDTO(rice);
+        return detail(rice);
     }
 
     @Transactional
@@ -140,7 +140,7 @@ public class RiceService {
 
         riceImageRepository.save(novaImagem);
 
-        return new RiceDetailDTO(rice);
+        return detail(rice);
     }
 
     @Transactional
@@ -215,6 +215,10 @@ public class RiceService {
         if (rice.getCoverUrl() != null && rice.getConfigUrl() != null) {
             rice.setStatus(RiceStatus.PUBLISHED);
         }
+    }
+
+    private RiceDetailDTO detail(Rice rice) {
+        return new RiceDetailDTO(rice, fileService::publicUrl);
     }
 
     private void deleteStoredFiles(Rice rice) {

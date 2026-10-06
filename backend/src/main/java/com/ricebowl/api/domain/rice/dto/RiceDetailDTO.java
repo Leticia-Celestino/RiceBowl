@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.function.Function;
 
 public record RiceDetailDTO(
         UUID id,
@@ -22,14 +23,18 @@ public record RiceDetailDTO(
         LocalDateTime createdAt
 ) {
     public RiceDetailDTO(Rice rice) {
+        this(rice, Function.identity());
+    }
+
+    public RiceDetailDTO(Rice rice, Function<String, String> publicUrl) {
         this(
             rice.getId(),
             rice.getTitle(),
             rice.getDescription(),
             rice.getDistro(),
             rice.getWindowManager(),
-            rice.getCoverUrl(),
-            rice.getConfigUrl(),
+            publicUrl.apply(rice.getCoverUrl()),
+            publicUrl.apply(rice.getConfigUrl()),
             rice.getUser().getNickname(),
             rice.getTags().stream().map(tag -> tag.getName()).collect(Collectors.toSet()),
             rice.getKarma() != null ? rice.getKarma() : 0L, 

@@ -38,13 +38,15 @@ public class User implements UserDetails {
     private String password;
     private String bio;
     private String avatarUrl;
+    private boolean emailVerified = true;
     
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public User(String nickname, String email, String password) {
+    public User(String nickname, String email, String password, boolean emailVerified) {
         this.nickname = nickname;
         this.email = email;
         this.password = password;
+        this.emailVerified = emailVerified;
     }
 
     @Override
@@ -67,5 +69,5 @@ public class User implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return emailVerified; }
 }

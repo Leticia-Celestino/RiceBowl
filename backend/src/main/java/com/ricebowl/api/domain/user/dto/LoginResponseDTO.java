@@ -1,4 +1,4 @@
 package com.ricebowl.api.domain.user.dto;
 
-public record LoginResponseDTO(String token, UserResponseDTO user) {
+public record LoginResponseDTO(UserResponseDTO user) {
 }

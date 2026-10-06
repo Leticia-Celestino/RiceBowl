@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
@@ -6,18 +6,25 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export function Textarea({ label, error, className = '', ...props }: TextareaProps) {
+    const generatedId = useId();
+    const textareaId = props.id ?? generatedId;
+    const errorId = error ? `${textareaId}-error` : undefined;
+
     return (
     <div className="flex flex-col gap-1 w-full">
         {label && (
-        <label className="text-xs font-mono text-gruvbox-gray uppercase tracking-wider">
+        <label htmlFor={textareaId} className="text-xs font-semibold text-gruvbox-gray">
             {label}
         </label>
         )}
         <textarea
-        className={`w-full min-h-[100px] bg-gruvbox-bg/50 border border-gruvbox-gray/30 rounded-md px-3 py-2 text-gruvbox-fg font-sans focus:outline-none focus:border-gruvbox-primary focus:ring-1 focus:ring-gruvbox-primary transition-colors placeholder:text-gruvbox-gray/50 resize-y ${error ? 'border-gruvbox-error' : ''} ${className}`}
+        id={textareaId}
+        aria-invalid={Boolean(error)}
+        aria-describedby={errorId}
+        className={`min-h-[120px] w-full resize-y rounded-xl border border-gruvbox-gray/25 bg-gruvbox-bg/55 px-3.5 py-3 text-gruvbox-fg transition-colors placeholder:text-gruvbox-gray/45 focus:border-gruvbox-primary focus:outline-none ${error ? 'border-gruvbox-error' : ''} ${className}`}
         {...props}
         />
-        {error && <span className="text-xs text-gruvbox-error font-mono">{error}</span>}
+        {error && <span id={errorId} className="text-xs text-gruvbox-error font-mono">{error}</span>}
     </div>
     );
 }

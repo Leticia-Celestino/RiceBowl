@@ -11,25 +11,34 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileService {
     private final ObjectStorage storage;
     private final ArchiveSecurityScanner archiveScanner;
+    private final MalwareScanner malwareScanner;
 
-    public FileService(ObjectStorage storage, ArchiveSecurityScanner archiveScanner) {
+    public FileService(ObjectStorage storage, ArchiveSecurityScanner archiveScanner, MalwareScanner malwareScanner) {
         this.storage = storage;
         this.archiveScanner = archiveScanner;
+        this.malwareScanner = malwareScanner;
     }
 
     public String uploadImage(MultipartFile file) {
         String extension = validate(file, 10 * 1024 * 1024L, true);
+        malwareScanner.scan(file);
         return storage.store(file, "images", extension);
     }
 
     public String uploadArchive(MultipartFile file) {
         String extension = validate(file, 50 * 1024 * 1024L, false);
+        malwareScanner.scan(file);
         archiveScanner.scan(file, extension);
         return storage.store(file, "dotfiles", extension);
     }
 
     public void deleteByUrl(String url) {
-        storage.deleteByUrl(url);
+        storage.delete(url);
+    }
+
+    public String publicUrl(String reference) {
+        if (reference == null || reference.isBlank()) return reference;
+        return storage.publicUrl(reference);
     }
 
     private String validate(MultipartFile file, long maxBytes, boolean image) {

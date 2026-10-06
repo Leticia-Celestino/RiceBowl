@@ -4,17 +4,25 @@ import com.ricebowl.api.domain.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetailsPasswordService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthorizationService implements UserDetailsService {
+public class AuthorizationService implements UserDetailsService, UserDetailsPasswordService {
 
     @Autowired
     UserRepository repository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return repository.findByEmail(username); 
+        return repository.findByEmailIgnoreCase(username.trim());
+    }
+
+    @Override
+    public UserDetails updatePassword(UserDetails userDetails, String newPassword) {
+        var user = (com.ricebowl.api.domain.user.User) userDetails;
+        user.setPassword(newPassword);
+        return repository.save(user);
     }
 }

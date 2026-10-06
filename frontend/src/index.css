@@ -1,28 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-    --font-sans: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-    --color-gruvbox-bg: #282828;
-    --color-gruvbox-panel: #3c3836;
-    --color-gruvbox-fg: #ebdbb2;
-    --color-gruvbox-gray: #a89984;
-    --color-gruvbox-primary: #fe8019;
-    --color-gruvbox-accent: #b8bb26;
-    --color-gruvbox-error: #fb4934;
-    --color-gruvbox-red: #fb4934;
-    --color-gruvbox-green: #b8bb26;
-    --color-gruvbox-yellow: #fabd2f;
-    --color-gruvbox-blue: #83a598;
+    --color-gruvbox-bg: #171614;
+    --color-gruvbox-panel: #24211d;
+    --color-gruvbox-fg: #f3eddf;
+    --color-gruvbox-gray: #a69d8c;
+    --color-gruvbox-primary: #f47a3c;
+    --color-gruvbox-accent: #b6c56b;
+    --color-gruvbox-error: #ef6a67;
+    --color-gruvbox-red: #ef6a67;
+    --color-gruvbox-green: #b6c56b;
+    --color-gruvbox-yellow: #e6bd5c;
+    --color-gruvbox-blue: #7fb4ad;
 }
 
 @layer base {
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        color-scheme: dark;
+        background: var(--color-gruvbox-bg);
+    }
+
     body {
-    background-color: var(--color-gruvbox-bg);
-    color: var(--color-gruvbox-fg);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+            radial-gradient(circle at 80% 0%, rgb(244 122 60 / 0.08), transparent 32rem),
+            var(--color-gruvbox-bg);
+        color: var(--color-gruvbox-fg);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+        background: rgb(244 122 60 / 0.3);
+        color: var(--color-gruvbox-fg);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-gruvbox-primary);
+        outline-offset: 3px;
+    }
+}
+
+@layer components {
+    .brand-mark {
+        display: inline-grid;
+        width: 2.25rem;
+        height: 2.25rem;
+        place-items: center;
+        border: 1px solid rgb(244 122 60 / 0.55);
+        border-radius: 45% 45% 55% 55%;
+        background: rgb(244 122 60 / 0.12);
+        color: var(--color-gruvbox-primary);
+        font-family: var(--font-mono);
+        font-weight: 700;
+    }
+
+    .brand-grid::before {
+        position: absolute;
+        inset: 0;
+        content: "";
+        background-image:
+            linear-gradient(rgb(243 237 223 / 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(243 237 223 / 0.035) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: linear-gradient(to bottom, black, transparent 90%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
     }
 }

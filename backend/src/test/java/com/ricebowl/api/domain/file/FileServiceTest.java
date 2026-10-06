@@ -20,7 +20,7 @@ class FileServiceTest {
     @BeforeEach
     void setUp() {
         storage = new RecordingStorage();
-        service = new FileService(storage, new ArchiveSecurityScanner());
+        service = new FileService(storage, new ArchiveSecurityScanner(), file -> {});
     }
 
     @Test
@@ -36,6 +36,18 @@ class FileServiceTest {
     void rejectsImageWithForgedExtension() {
         var file = new MockMultipartFile(
                 "file", "cover.png", "image/png", "not an image".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalArgumentException.class, () -> service.uploadImage(file));
+        assertEquals(0, storage.calls);
+    }
+
+    @Test
+    void neverStoresFileRejectedByMalwareScanner() {
+        service = new FileService(storage, new ArchiveSecurityScanner(), file -> {
+            throw new IllegalArgumentException("infected");
+        });
+        byte[] png = {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00};
+        var file = new MockMultipartFile("file", "cover.png", "image/png", png);
 
         assertThrows(IllegalArgumentException.class, () -> service.uploadImage(file));
         assertEquals(0, storage.calls);
@@ -85,7 +97,12 @@ class FileServiceTest {
         }
 
         @Override
-        public void deleteByUrl(String url) {
+        public String publicUrl(String reference) {
+            return reference;
+        }
+
+        @Override
+        public void delete(String reference) {
         }
     }
 }

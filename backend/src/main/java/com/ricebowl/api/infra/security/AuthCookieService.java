@@ -1,5 +1,7 @@
 package com.ricebowl.api.infra.security;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +20,7 @@ public class AuthCookieService {
             @Value("${api.security.cookie.name:ricebowl_session}") String name,
             @Value("${api.security.cookie.secure:false}") boolean secure,
             @Value("${api.security.cookie.same-site:Lax}") String sameSite,
-            @Value("${api.security.token.expiration:PT2H}") Duration maxAge) {
+            @Value("${api.security.session.expiration:PT2H}") Duration maxAge) {
         this.name = name;
         this.secure = secure;
         this.sameSite = sameSite;
@@ -31,6 +33,14 @@ public class AuthCookieService {
 
     public void clear(HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie("", Duration.ZERO).toString());
+    }
+
+    public String read(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (name.equals(cookie.getName())) return cookie.getValue();
+        }
+        return null;
     }
 
     private ResponseCookie cookie(String value, Duration age) {

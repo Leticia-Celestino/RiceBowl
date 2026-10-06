@@ -17,8 +17,7 @@ api.interceptors.request.use(
     async (config) => {
         const method = config.method?.toUpperCase() || 'GET';
         const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
-        const isInitialAuth = config.url === '/auth/login' || config.url === '/auth/register';
-        if (isMutation && !isInitialAuth) {
+        if (isMutation) {
             csrfRequest ??= axios.get(`${api.defaults.baseURL}/auth/csrf`, {
                 withCredentials: true,
             }).finally(() => {

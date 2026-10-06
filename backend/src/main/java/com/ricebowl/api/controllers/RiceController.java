@@ -2,6 +2,7 @@ package com.ricebowl.api.controllers;
 
 import java.util.UUID;
 import java.util.List;
+import java.time.Duration;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,7 +30,9 @@ import com.ricebowl.api.domain.rice.dto.RiceDetailDTO;
 import com.ricebowl.api.domain.rice.dto.RiceSummaryDTO;
 import com.ricebowl.api.domain.user.User;
 import com.ricebowl.api.shared.PageResponse;
+import com.ricebowl.api.infra.security.RateLimitService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -39,13 +42,16 @@ import lombok.RequiredArgsConstructor;
 public class RiceController {
 
     private final RiceService riceService;
+    private final RateLimitService rateLimitService;
 
     @PostMapping
     public ResponseEntity<RiceDetailDTO> create(
             @RequestBody @Valid RiceCreateDTO data,
             @AuthenticationPrincipal User user,
+            HttpServletRequest request,
             UriComponentsBuilder uriBuilder
     ) {
+        checkRate("rice-create", user, request, 10, Duration.ofHours(1));
         var response = riceService.create(data, user);
         var uri = uriBuilder.path("/rices/{id}").buildAndExpand(response.id()).toUri();
         return ResponseEntity.created(uri).body(response);
@@ -82,8 +88,10 @@ public class RiceController {
     public ResponseEntity<RiceDetailDTO> uploadCover(
         @PathVariable UUID id,
         @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
-        @AuthenticationPrincipal User user
+        @AuthenticationPrincipal User user,
+        HttpServletRequest request
     ){
+        checkRate("rice-upload", user, request, 30, Duration.ofHours(1));
         var response = riceService.uploadCover(id, file, user);
         return ResponseEntity.ok(response);
     }
@@ -92,8 +100,10 @@ public class RiceController {
     public ResponseEntity<RiceDetailDTO> uploadConfig(
         @PathVariable UUID id,
         @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
-        @AuthenticationPrincipal User user
+        @AuthenticationPrincipal User user,
+        HttpServletRequest request
     ) {
+        checkRate("rice-upload", user, request, 30, Duration.ofHours(1));
         var response = riceService.uploadConfig(id, file, user);
         return ResponseEntity.ok(response);
     }
@@ -103,8 +113,10 @@ public class RiceController {
         @PathVariable UUID id,
         @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
         @RequestParam(value = "description", required = false) String description,
-        @AuthenticationPrincipal User user
+        @AuthenticationPrincipal User user,
+        HttpServletRequest request
     ) {
+        checkRate("rice-upload", user, request, 30, Duration.ofHours(1));
         var response = riceService.addImageToGallery(id, file, description, user);
         return ResponseEntity.ok(response);
     }
@@ -114,8 +126,10 @@ public class RiceController {
     public ResponseEntity<Long> voteRice(
             @PathVariable UUID id, 
             @RequestParam Short value, 
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request
     ) {
+        checkRate("rice-vote", user, request, 120, Duration.ofMinutes(1));
         Long newKarma = riceService.voteRice(id, value, user);
         return ResponseEntity.ok(newKarma);
     }
@@ -124,8 +138,10 @@ public class RiceController {
     public ResponseEntity<CommentResponseDTO> addComment(
             @PathVariable UUID id, 
             @RequestBody @Valid CommentDTO dto, 
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request
     ) {
+        checkRate("rice-comment", user, request, 20, Duration.ofMinutes(10));
         var comment = riceService.addComment(id, dto, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(comment);
     }
@@ -133,5 +149,15 @@ public class RiceController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<CommentResponseDTO>> listComments(@PathVariable UUID id) {
         return ResponseEntity.ok(riceService.listComments(id));
+    }
+
+    private void checkRate(
+            String action,
+            User user,
+            HttpServletRequest request,
+            int limit,
+        Duration window) {
+        rateLimitService.check(action + "-account", user.getId().toString(), limit, window);
+        rateLimitService.check(action + "-ip", rateLimitService.clientAddress(request), limit, window);
     }
 }

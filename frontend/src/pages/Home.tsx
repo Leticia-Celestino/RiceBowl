@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter } from 'lucide-react';
-import { RiceCard } from '../components/ui/RiceCard';
-import { RiceModal } from '../components/ui/RiceModal';
+import { RiceModal } from '../features/rices/components/RiceModal';
 import type { RiceDTO, PageResponse } from '../types/rice';
 import { api } from '../config/api';
+import { PageState } from '../components/ui/PageState';
+import { RiceFilters } from '../features/rices/components/RiceFilters';
+import { RiceGrid } from '../features/rices/components/RiceGrid';
 
 export function Home() {
     const [rices, setRices] = useState<RiceDTO[]>([]);
@@ -50,14 +51,13 @@ export function Home() {
             }
         };
 
-        // DEBOUNCE: Aguarda 300ms sem o usuário digitar para finalmente fazer a chamada na API
         const delayDebounceFn = setTimeout(() => {
             void fetchRices();
         }, 300);
 
         return () => {
-            clearTimeout(delayDebounceFn); // Cancela o timer se o usuário digitar algo novo
-            controller.abort(); // Cancela a requisição fantasma
+            clearTimeout(delayDebounceFn);
+            controller.abort();
         };
     }, [search, distroFilter, wmFilter, page]);
 
@@ -67,76 +67,34 @@ export function Home() {
     };
 
     return (
-        <div className="flex flex-col gap-6 p-6 h-full overflow-y-auto w-full relative">
-            
-            <div className="bg-gruvbox-bg/50 backdrop-blur-md border border-gruvbox-gray/20 rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center sticky top-0 z-10 shadow-md">
-                <div className="relative flex-grow w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Busque por título ou descrição..." 
-                        value={search}
-                        onChange={(e) => updateSearch(e.target.value)}
-                        className="w-full bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-10 pr-4 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans"
-                    />
-                </div>
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-8 px-5 py-8 sm:px-10 sm:py-12">
+            <header className="max-w-4xl py-5 sm:py-10">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gruvbox-primary">Galeria da comunidade</p>
+                <h1 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-[-0.055em] text-gruvbox-fg sm:text-6xl">
+                    Desktops Linux que valem a pena estudar.
+                </h1>
+                <p className="mt-5 max-w-2xl text-base leading-relaxed text-gruvbox-gray sm:text-lg">
+                    Explore escolhas visuais, ferramentas e dotfiles compartilhados por quem gosta de construir o próprio ambiente.
+                </p>
+            </header>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                    <div className="relative flex-grow md:flex-grow-0">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
-                        <select 
-                            value={distroFilter}
-                            onChange={(e) => { setPage(0); setDistroFilter(e.target.value); }}
-                            className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
-                        >
-                            <option value="">Qualquer Distro</option>
-                            <option value="Arch Linux">Arch Linux</option>
-                            <option value="Ubuntu">Ubuntu</option>
-                            <option value="Fedora">Fedora</option>
-                            <option value="Debian">Debian</option>
-                            <option value="Zorin">Zorin OS</option>
-                        </select>
-                    </div>
-
-                    <div className="relative flex-grow md:flex-grow-0">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
-                        <select 
-                            value={wmFilter}
-                            onChange={(e) => { setPage(0); setWmFilter(e.target.value); }}
-                            className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
-                        >
-                            <option value="">Qualquer WM/DE</option>
-                            <option value="Hyprland">Hyprland</option>
-                            <option value="i3wm">i3wm</option>
-                            <option value="GNOME">GNOME</option>
-                            <option value="KDE Plasma">KDE Plasma</option>
-                            <option value="bspwm">bspwm</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <RiceFilters
+                search={search}
+                distro={distroFilter}
+                windowManager={wmFilter}
+                onSearchChange={updateSearch}
+                onDistroChange={(value) => { setPage(0); setDistroFilter(value); }}
+                onWindowManagerChange={(value) => { setPage(0); setWmFilter(value); }}
+            />
 
             {isLoading ? (
-                <div className="text-center py-20 text-gruvbox-gray font-mono animate-pulse">Carregando rices...</div>
+                <PageState loading>Carregando rices...</PageState>
             ) : error ? (
-                <div role="alert" className="text-center py-20 text-gruvbox-error font-mono">{error}</div>
+                <PageState tone="error">{error}</PageState>
             ) : rices.length === 0 ? (
-                <div className="text-center py-20 text-gruvbox-gray font-mono">
-                    Nenhum setup encontrado para estes filtros.
-                </div>
+                <PageState>Nenhum setup encontrado para estes filtros.</PageState>
             ) : (
-                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
-                    {rices.map((rice) => (
-                        // AVISO CSS: O break-inside-avoid impede o card de ser rasgado ao meio nas colunas
-                        <div 
-                            key={rice.id} 
-                            onClick={() => setSelectedRice(rice)}
-                            className="break-inside-avoid cursor-pointer hover:opacity-95 transition-opacity"
-                        >
-                            <RiceCard rice={rice} />
-                        </div>
-                    ))}
-                </div>
+                <RiceGrid rices={rices} onSelect={setSelectedRice} />
             )}
 
             {!isLoading && !error && page + 1 < totalPages && (

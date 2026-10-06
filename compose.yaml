@@ -31,7 +31,20 @@ services:
       DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-ricebowl}
       DATABASE_USER: ${DATABASE_USER:-ricebowl}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-ricebowl}
-      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-before-production}
+      AUTH_SESSION_EXPIRATION: ${AUTH_SESSION_EXPIRATION:-PT2H}
+      EMAIL_VERIFICATION_REQUIRED: ${EMAIL_VERIFICATION_REQUIRED:-false}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@localhost}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      MALWARE_SCAN_ENABLED: ${MALWARE_SCAN_ENABLED:-false}
+      CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
       STORAGE_LOCAL_PATH: /data/uploads
       CORS_ALLOWED_ORIGINS: http://localhost:${WEB_PORT:-5173}
     ports:

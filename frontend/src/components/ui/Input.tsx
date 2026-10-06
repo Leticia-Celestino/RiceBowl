@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -6,18 +6,25 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function Input({ label, error, className = '', ...props }: InputProps) {
+    const generatedId = useId();
+    const inputId = props.id ?? generatedId;
+    const errorId = error ? `${inputId}-error` : undefined;
+
     return (
     <div className="flex flex-col gap-1 w-full">
         {label && (
-        <label className="text-xs font-mono text-gruvbox-gray uppercase tracking-wider">
+        <label htmlFor={inputId} className="text-xs font-semibold text-gruvbox-gray">
             {label}
         </label>
         )}
         <input
-        className={`w-full bg-gruvbox-bg/50 border border-gruvbox-gray/30 rounded-md px-3 py-2 text-gruvbox-fg font-sans focus:outline-none focus:border-gruvbox-primary focus:ring-1 focus:ring-gruvbox-primary transition-colors placeholder:text-gruvbox-gray/50 ${error ? 'border-gruvbox-error' : ''} ${className}`}
+        id={inputId}
+        aria-invalid={Boolean(error)}
+        aria-describedby={errorId}
+        className={`w-full rounded-xl border border-gruvbox-gray/25 bg-gruvbox-bg/55 px-3.5 py-3 text-gruvbox-fg transition-colors placeholder:text-gruvbox-gray/45 focus:border-gruvbox-primary focus:outline-none ${error ? 'border-gruvbox-error' : ''} ${className}`}
         {...props}
         />
-        {error && <span className="text-xs text-gruvbox-error font-mono">{error}</span>}
+        {error && <span id={errorId} className="text-xs text-gruvbox-error font-mono">{error}</span>}
     </div>
     );
 }

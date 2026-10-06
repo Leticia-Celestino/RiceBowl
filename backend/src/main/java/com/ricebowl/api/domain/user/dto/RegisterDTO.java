@@ -10,6 +10,6 @@ public record RegisterDTO(
     @Pattern(regexp = "^[A-Za-z0-9_-]+$", message = "must contain only letters, numbers, underscores and hyphens")
     String nickname,
     @NotBlank @Email String email, 
-    @NotBlank @Size(min = 8, max = 72) String password
+    @NotBlank @Size(min = 12, max = 128) String password
 ) {
 }

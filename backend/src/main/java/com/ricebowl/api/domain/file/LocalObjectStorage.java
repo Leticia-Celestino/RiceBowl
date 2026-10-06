@@ -8,9 +8,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
+@ConditionalOnProperty(name = "storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalObjectStorage implements ObjectStorage {
     private final Path root;
     private final String publicBaseUrl;
@@ -40,7 +42,12 @@ public class LocalObjectStorage implements ObjectStorage {
     }
 
     @Override
-    public void deleteByUrl(String url) {
+    public String publicUrl(String reference) {
+        return reference;
+    }
+
+    @Override
+    public void delete(String url) {
         if (url == null || url.isBlank()) return;
         int marker = url.indexOf("/uploads/");
         if (marker < 0) return;

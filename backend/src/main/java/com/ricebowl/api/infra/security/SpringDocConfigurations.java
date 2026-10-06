@@ -13,13 +13,12 @@ public class SpringDocConfigurations {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-            .addSecurityItem(new SecurityRequirement().addList("bearer-key"))
+            .addSecurityItem(new SecurityRequirement().addList("session-cookie"))
             .components(new Components()
-                .addSecuritySchemes("bearer-key",
+                .addSecuritySchemes("session-cookie",
                     new SecurityScheme()
-                        .name("bearer-key")
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT")));
+                        .name("ricebowl_session")
+                        .in(SecurityScheme.In.COOKIE)
+                        .type(SecurityScheme.Type.APIKEY)));
     }
 }

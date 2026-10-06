@@ -6,9 +6,12 @@ import { Login } from './pages/Login';
 import { Upload } from './pages/Upload';
 import { Profile } from './pages/Profile';
 import { CommandPalette } from './components/ui/CommandPalette'; 
-import { FastfetchBoot } from './components/ui/FastfetchBoot';
 import { RequireAuth } from './features/auth/RequireAuth';
 import { useAuth } from './features/auth/useAuth';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { SecuritySettings } from './pages/SecuritySettings';
 
 function App() {
   const hydrate = useAuth(state => state.hydrate);
@@ -19,7 +22,6 @@ function App() {
 
   return (
     <>
-      <FastfetchBoot />
       <CommandPalette /> 
 
       <Routes>
@@ -28,11 +30,15 @@ function App() {
           <Route path="/explore" element={<Home />} />
           <Route element={<RequireAuth />}>
             <Route path="/upload" element={<Upload />} />
+            <Route path="/settings/security" element={<SecuritySettings />} />
           </Route>
           {/* Mude aqui para capturar o nickname */}
           <Route path="/profile/:nickname" element={<Profile />} /> 
         </Route>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
     </>
   );

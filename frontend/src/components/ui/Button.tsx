@@ -13,12 +13,12 @@ export function Button({
     ...props 
 }: ButtonProps) {
 
-    const baseStyles = "inline-flex items-center justify-center gap-2 px-4 py-2 font-mono text-sm font-medium transition-all duration-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseStyles = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
     const variants = {
-    primary: "bg-gruvbox-primary text-gruvbox-bg hover:bg-orange-500 active:scale-95",
-    ghost: "bg-transparent text-gruvbox-fg hover:bg-gruvbox-gray/10 active:scale-95",
-    danger: "bg-gruvbox-error/20 text-gruvbox-error hover:bg-gruvbox-error hover:text-gruvbox-bg active:scale-95"
+    primary: "bg-gruvbox-primary text-gruvbox-bg shadow-[0_8px_30px_rgb(244_122_60_/_0.15)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0",
+    ghost: "bg-transparent text-gruvbox-fg hover:bg-gruvbox-gray/10",
+    danger: "bg-gruvbox-error/15 text-gruvbox-error hover:bg-gruvbox-error hover:text-gruvbox-bg"
     };
 
     return (

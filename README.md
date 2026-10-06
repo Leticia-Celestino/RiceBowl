@@ -67,8 +67,8 @@ Os testes do backend usam H2 em memória e não exigem um PostgreSQL local. Test
 
 Funcional:
 
-- autenticação JWT e cadastro;
-- sessão web em cookie HttpOnly com proteção CSRF;
+- cadastro com confirmação de e-mail e recuperação de senha;
+- sessões opacas e revogáveis em cookie HttpOnly com proteção CSRF;
 - feed público com busca, filtros e paginação incremental;
 - perfis e rices por autor;
 - upload validado de imagem e arquivo ZIP/TAR;

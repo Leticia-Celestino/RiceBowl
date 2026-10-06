@@ -4,5 +4,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ObjectStorage {
     String store(MultipartFile file, String prefix, String extension);
-    void deleteByUrl(String url);
+    String publicUrl(String reference);
+    void delete(String reference);
 }

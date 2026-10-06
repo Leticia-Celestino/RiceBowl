@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { X, Download, Monitor, Cpu, Calendar, Send, User } from 'lucide-react';
-import type { RiceDTO, CommentDTO } from '../../types/rice';
-import { GlassPanel } from './GlassPanel';
-import { Tag } from './Tag';
-import { Button } from './Button';
-import { api } from '../../config/api';
-import { useAuth } from '../../features/auth/useAuth';
+import type { RiceDTO, CommentDTO } from '../../../types/rice';
+import { GlassPanel } from '../../../components/ui/GlassPanel';
+import { Tag } from '../../../components/ui/Tag';
+import { Button } from '../../../components/ui/Button';
+import { api } from '../../../config/api';
+import { useAuth } from '../../auth/useAuth';
 
 interface RiceModalProps {
     rice: RiceDTO | null;

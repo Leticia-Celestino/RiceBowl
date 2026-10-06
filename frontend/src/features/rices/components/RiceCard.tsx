@@ -1,8 +1,8 @@
 // src/components/ui/RiceCard.tsx
 import { useState } from 'react';
 import { Monitor, ArrowBigUp, ArrowBigDown, MessageSquare } from 'lucide-react';
-import type { RiceDTO } from '../../types/rice';
-import { api } from '../../config/api';
+import type { RiceDTO } from '../../../types/rice';
+import { api } from '../../../config/api';
 
 interface RiceCardProps {
     rice: RiceDTO;
@@ -41,33 +41,33 @@ export function RiceCard({ rice }: RiceCardProps) {
     };
 
     return (
-        <div className="group relative bg-gruvbox-bg border border-gruvbox-gray/20 rounded-lg overflow-hidden hover:border-gruvbox-primary/50 transition-all duration-300 cursor-pointer break-inside-avoid mb-6 flex flex-col">
+        <div className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gruvbox-gray/15 bg-gruvbox-panel/55 transition-all duration-300 hover:-translate-y-1 hover:border-gruvbox-primary/35 hover:shadow-[0_24px_60px_rgb(0_0_0_/_0.28)]">
             
             {/* Imagem de Capa */}
-            <div className="relative w-full overflow-hidden bg-gruvbox-bg/50">
+            <div className="relative aspect-[16/10] w-full overflow-hidden bg-gruvbox-bg/50">
                 <img 
                     src={rice.coverUrl || '/no_cover.png'} 
                     alt={rice.title}
-                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]"
                     loading="lazy"
                 />
             </div>
 
             {/* Corpo do Card */}
-            <div className="p-4 flex flex-col gap-2">
+            <div className="flex flex-1 flex-col gap-2 p-5">
                 <div className="flex justify-between items-start gap-2">
-                    <h3 className="text-gruvbox-fg font-bold text-lg font-sans leading-tight">
+                    <h3 className="text-xl font-semibold leading-tight tracking-[-0.025em] text-gruvbox-fg">
                         {rice.title}
                     </h3>
-                    <div className="flex items-center gap-1 text-[10px] uppercase font-mono text-gruvbox-accent bg-gruvbox-accent/10 px-2 py-1 rounded">
+                    <div className="flex shrink-0 items-center gap-1 rounded-full bg-gruvbox-accent/10 px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-gruvbox-accent">
                         <Monitor size={12} />
                         {rice.windowManager}
                     </div>
                 </div>
-                <p className="text-sm font-mono text-gruvbox-gray">@{rice.authorNickname}</p>
+                <p className="text-xs text-gruvbox-gray">por <span className="font-mono">@{rice.authorNickname}</span></p>
 
                 {/* RODAPÉ SOCIAL (Reddit Style) */}
-                <div className="mt-2 pt-3 border-t border-gruvbox-gray/10 flex items-center justify-between">
+                <div className="mt-auto flex items-center justify-between border-t border-gruvbox-gray/10 pt-4">
                     
                     {/* Controles de Karma */}
                     <div className="flex items-center gap-1 bg-gruvbox-gray/5 rounded-full px-1">
