@@ -54,6 +54,7 @@ services:
     build:
       context: ./frontend
     environment:
+      PORT: 80
       API_UPSTREAM: http://api:8080
     ports:
       - "${WEB_PORT:-5173}:80"
