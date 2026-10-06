@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { User, Star, Image as ImageIcon, Edit3, Trash2 } from 'lucide-react';
+import { User, Star, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { RiceCard } from '../components/ui/RiceCard';
 import { RiceModal } from '../components/ui/RiceModal';
 import type { RiceDTO, PageResponse } from '../types/rice';
+import { api } from '../config/api';
 
 interface UserProfileDTO {
     id: string;
@@ -23,51 +24,45 @@ export function Profile() {
     const [isOwner, setIsOwner] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    const handleDelete = async (riceId: string) => {
+        if (!window.confirm('Excluir este rice e seus arquivos permanentemente?')) return;
+        try {
+            await api.delete(`/rices/${riceId}`);
+            setRices(items => items.filter(item => item.id !== riceId));
+            setProfile(current => current ? { ...current, riceCount: Math.max(0, current.riceCount - 1) } : current);
+        } catch {
+            window.alert('Não foi possível excluir o rice.');
+        }
+    };
+
     useEffect(() => {
         const controller = new AbortController();
 
         const fetchProfileData = async () => {
             setIsLoading(true);
             try {
-                const token = localStorage.getItem('token');
-                const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
-
                 // 1. Busca os dados do perfil público
-                const profileRes = await fetch(`http://localhost:8080/users/${nickname}`, {
+                const profileRes = await api.get<UserProfileDTO>(`/users/${nickname}`, {
                     signal: controller.signal,
-                    headers
                 });
-                
-                if (profileRes.ok) {
-                    const profileData: UserProfileDTO = await profileRes.json();
-                    setProfile(profileData);
-                }
+                setProfile(profileRes.data);
 
                 // 2. Busca apenas os rices deste autor
-                const ricesRes = await fetch(`http://localhost:8080/rices?author=${nickname}`, {
+                const ricesRes = await api.get<PageResponse<RiceDTO>>(`/rices?author=${nickname}`, {
                     signal: controller.signal,
-                    headers
                 });
-
-                if (ricesRes.ok) {
-                    const ricesData: PageResponse<RiceDTO> = await ricesRes.json();
-                    setRices(ricesData.content);
-                }
+                setRices(ricesRes.data.content);
 
                 // 3. Checa se o usuário logado é o dono do perfil
-                if (token) {
-                    const meRes = await fetch(`http://localhost:8080/users/me`, {
+                if (localStorage.getItem('@ricebowl:token')) {
+                    const meRes = await api.get('/users/me', {
                         signal: controller.signal,
-                        headers
                     });
-                    if (meRes.ok) {
-                        const meData = await meRes.json();
-                        setIsOwner(meData.nickname.toLowerCase() === nickname?.toLowerCase());
-                    }
+                    setIsOwner(meRes.data.nickname.toLowerCase() === nickname?.toLowerCase());
                 }
 
             } catch (error) {
-                if ((error as DOMException).name !== 'AbortError') {
+                if ((error as Error).name !== 'CanceledError') {
                     console.error("Erro ao carregar o perfil:", error);
                 }
             } finally {
@@ -119,12 +114,6 @@ export function Profile() {
                             </p>
                         </div>
                         
-                        {/* Botão de Editar Perfil (Aparece só para o dono) */}
-                        {isOwner && (
-                            <button className="hidden md:flex items-center gap-2 px-4 py-2 bg-gruvbox-gray/10 hover:bg-gruvbox-gray/20 text-gruvbox-fg text-sm rounded-md transition-colors font-mono border border-gruvbox-gray/20">
-                                <Settings size={16} /> Editar Perfil
-                            </button>
-                        )}
                     </div>
 
                     {/* Estatísticas */}
@@ -172,14 +161,10 @@ export function Profile() {
                                 {isOwner && (
                                     <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <button 
-                                            className="p-2 bg-gruvbox-bg/80 backdrop-blur-sm rounded text-gruvbox-gray hover:text-gruvbox-fg hover:bg-gruvbox-gray/20 shadow"
-                                            onClick={(e) => { e.stopPropagation(); /* Lógica de edição futura */ }}
-                                        >
-                                            <Edit3 size={16} />
-                                        </button>
-                                        <button 
+                                            type="button"
+                                            aria-label="Excluir rice"
                                             className="p-2 bg-gruvbox-bg/80 backdrop-blur-sm rounded text-gruvbox-red hover:bg-gruvbox-red/20 shadow"
-                                            onClick={(e) => { e.stopPropagation(); /* Lógica de deleção futura */ }}
+                                            onClick={(e) => { e.stopPropagation(); void handleDelete(rice.id); }}
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -198,6 +183,3 @@ export function Profile() {
         </div>
     );
 }
-
-// Para usar a rotação do lucide react, importamos Settings também
-import { Settings } from 'lucide-react';

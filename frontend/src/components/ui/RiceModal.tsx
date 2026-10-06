@@ -4,6 +4,8 @@ import type { RiceDTO, CommentDTO } from '../../types/rice';
 import { GlassPanel } from './GlassPanel';
 import { Tag } from './Tag';
 import { Button } from './Button';
+import { api } from '../../config/api';
+import { useAuth } from '../../features/auth/useAuth';
 
 interface RiceModalProps {
     rice: RiceDTO | null;
@@ -32,6 +34,8 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const isAuthenticated = useAuth(state => state.isAuthenticated);
 
     useEffect(() => {
         if (!rice) return;
@@ -40,23 +44,16 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
 
         const fetchComments = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`http://localhost:8080/rices/${rice.id}/comments`, {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                const response = await api.get<CommentDTO[]>(`/rices/${rice.id}/comments`, {
                     signal: controller.signal,
                 });
 
-                if (!response.ok) return;
-
-                const data = await response.json();
-                const fetchedComments = Array.isArray(data) ? data : (data.content || []);
-
                 setCommentsState({
                     riceId: rice.id,
-                    items: fetchedComments,
+                    items: response.data,
                 });
             } catch (error) {
-                if ((error as Error).name !== 'AbortError') {
+                if ((error as Error).name !== 'CanceledError') {
                     console.error('Erro ao carregar a discussão:', error);
                 }
             }
@@ -65,7 +62,20 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
         void fetchComments();
 
         return () => controller.abort();
-    }, [rice?.id]); 
+    }, [rice]);
+
+    useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [onClose]);
 
     if (!rice) return null;
 
@@ -81,50 +91,37 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
         e.preventDefault();
 
         if (!newComment.trim() || isSubmitting) return;
+        if (!isAuthenticated) {
+            setSubmitError('Faça login para participar da discussão.');
+            return;
+        }
 
         setIsSubmitting(true);
+        setSubmitError('');
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/rices/${rice.id}/comments`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content: newComment }),
+            const response = await api.post<CommentDTO>(`/rices/${rice.id}/comments`, {
+                content: newComment,
             });
 
-            if (response.ok) {
-                const optimisticComment: CommentDTO = {
-                    id: crypto.randomUUID(),
-                    content: newComment,
-                    authorNickname: 'Você',
-                    createdAt: new Date().toISOString(),
-                };
+            setCommentsState(prev => ({
+                riceId: rice.id,
+                items: prev.riceId === rice.id
+                    ? [...prev.items, response.data]
+                    : [...(rice.comments ?? []), response.data],
+            }));
 
-                setCommentsState(prev => ({
-                    riceId: rice.id,
-                    items:
-                        prev.riceId === rice.id
-                            ? [...prev.items, optimisticComment]
-                            : [...(rice.comments ?? []), optimisticComment],
-                }));
-
-                setDraftState({
-                    riceId: rice.id,
-                    text: '',
-                });
-            }
+            setDraftState({ riceId: rice.id, text: '' });
         } catch (error) {
             console.error('Falha ao enviar comentário', error);
+            setSubmitError('Não foi possível enviar o comentário.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+        <div role="dialog" aria-modal="true" aria-labelledby="rice-modal-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
             <div
                 className="absolute inset-0 bg-gruvbox-bg/80 backdrop-blur-md"
                 onClick={onClose}
@@ -132,6 +129,8 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
 
             <GlassPanel className="w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300">
                 <button
+                    type="button"
+                    aria-label="Fechar detalhes"
                     onClick={onClose}
                     className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gruvbox-bg/50 text-gruvbox-gray hover:text-gruvbox-fg transition-colors"
                 >
@@ -150,7 +149,7 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
                     <div className="md:w-[45%] flex flex-col h-full bg-gruvbox-bg/10">
                         <div className="flex-grow overflow-y-auto p-6 flex flex-col gap-6">
                             <div>
-                                <h2 className="text-2xl font-sans font-bold text-gruvbox-fg">{rice.title}</h2>
+                                <h2 id="rice-modal-title" className="text-2xl font-sans font-bold text-gruvbox-fg">{rice.title}</h2>
                                 <p className="text-gruvbox-gray text-sm font-mono">@{rice.authorNickname}</p>
                             </div>
 
@@ -249,6 +248,7 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
                                     <Send size={18} />
                                 </button>
                             </form>
+                            {submitError && <p role="alert" className="text-xs text-gruvbox-error font-mono">{submitError}</p>}
 
                             <div className="flex items-center justify-between mt-1">
                                 <div className="text-gruvbox-gray text-[10px] font-mono flex items-center gap-1">

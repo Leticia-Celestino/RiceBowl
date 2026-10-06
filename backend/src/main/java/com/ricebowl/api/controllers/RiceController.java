@@ -1,9 +1,10 @@
 package com.ricebowl.api.controllers;
 
 import java.util.UUID;
+import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,9 +23,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.ricebowl.api.domain.rice.RiceService;
 import com.ricebowl.api.domain.rice.dto.CommentDTO;
+import com.ricebowl.api.domain.rice.dto.CommentResponseDTO;
 import com.ricebowl.api.domain.rice.dto.RiceCreateDTO;
 import com.ricebowl.api.domain.rice.dto.RiceDetailDTO;
+import com.ricebowl.api.domain.rice.dto.RiceSummaryDTO;
 import com.ricebowl.api.domain.user.User;
+import com.ricebowl.api.shared.PageResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,15 +52,15 @@ public class RiceController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RiceDetailDTO>> list(
+    public ResponseEntity<PageResponse<RiceSummaryDTO>> list(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String distro,
             @RequestParam(required = false) String windowManager,
             @RequestParam(required = false) String author, 
-            @PageableDefault(size = 10, sort = {"createdAt"}) Pageable pageable
+            @PageableDefault(size = 12, sort = {"createdAt"}, direction = Sort.Direction.DESC) Pageable pageable
     ) {
         var page = riceService.findAll(search, distro, windowManager, author, pageable);
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(PageResponse.from(page));
     }
 
     @GetMapping("/{id}")
@@ -117,12 +121,17 @@ public class RiceController {
     }
 
     @PostMapping("/{id}/comments")
-    public ResponseEntity<Void> addComment(
+    public ResponseEntity<CommentResponseDTO> addComment(
             @PathVariable UUID id, 
             @RequestBody @Valid CommentDTO dto, 
             @AuthenticationPrincipal User user
     ) {
-        riceService.addComment(id, dto, user);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        var comment = riceService.addComment(id, dto, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(comment);
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<CommentResponseDTO>> listComments(@PathVariable UUID id) {
+        return ResponseEntity.ok(riceService.listComments(id));
     }
 }

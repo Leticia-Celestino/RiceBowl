@@ -22,31 +22,34 @@ export function FastfetchBoot() {
         if (!isVisible) return;
 
         let delay = 0;
+        const timers: number[] = [];
         
         // 1. Simula as linhas de log aparecendo rápido
         BOOT_LINES.forEach((line) => {
             delay += Math.random() * 200 + 100; 
-            setTimeout(() => {
+            timers.push(window.setTimeout(() => {
                 setVisibleLines(prev => [...prev, line]);
-            }, delay);
+            }, delay));
         });
 
         // 2. Mostra a arte ASCII (Fastfetch)
-        setTimeout(() => {
+        timers.push(window.setTimeout(() => {
             setShowFetch(true);
-        }, delay + 300);
+        }, delay + 300));
 
         // 3. Aguarda uns segundos para o usuário ler, depois inicia o Fade Out
-        setTimeout(() => {
+        timers.push(window.setTimeout(() => {
             setIsFadingOut(true);
             
             // 4. Remove da tela e salva na sessão
-            setTimeout(() => {
+            timers.push(window.setTimeout(() => {
                 sessionStorage.setItem('ricebowl_booted', 'true');
                 setIsVisible(false);
-            }, 500); 
+            }, 500));
             
-        }, delay + 3500); 
+        }, delay + 1200));
+
+        return () => timers.forEach(window.clearTimeout);
 
     }, [isVisible]); 
 
@@ -82,7 +85,7 @@ export function FastfetchBoot() {
                         <div className="flex flex-col gap-1 text-sm sm:text-base">
                             <div className="text-gruvbox-primary font-bold mb-2">leticia<span className="text-gruvbox-fg">@</span>ricebowl</div>
                             <div><span className="text-gruvbox-accent font-bold">OS:</span> RiceBowl WebOS 1.0</div>
-                            <div><span className="text-gruvbox-accent font-bold">Kernel:</span> React 18 / Vite</div>
+                            <div><span className="text-gruvbox-accent font-bold">Kernel:</span> React 19 / Vite</div>
                             <div><span className="text-gruvbox-accent font-bold">Uptime:</span> 0 mins</div>
                             <div><span className="text-gruvbox-accent font-bold">Packages:</span> 42 (npm)</div>
                             <div><span className="text-gruvbox-accent font-bold">Shell:</span> bash</div>

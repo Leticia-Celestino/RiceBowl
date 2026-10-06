@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Monitor, ArrowBigUp, ArrowBigDown, MessageSquare } from 'lucide-react';
 import type { RiceDTO } from '../../types/rice';
+import { api } from '../../config/api';
 
 interface RiceCardProps {
     rice: RiceDTO;
@@ -17,6 +18,9 @@ export function RiceCard({ rice }: RiceCardProps) {
         e.stopPropagation(); // Impede que clicar na seta abra o Modal do post!
         
         // Lógica visual instantânea (UX)
+        const previousKarma = karma;
+        const previousVote = userVote;
+
         if (userVote === value) {
             setKarma(prev => prev - value); // Remove o voto
             setUserVote(0);
@@ -27,14 +31,12 @@ export function RiceCard({ rice }: RiceCardProps) {
 
         // Chamada real para a API no Back-end
         try {
-            const token = localStorage.getItem('token'); // Ajuste conforme você guarda o seu token!
-            await fetch(`http://localhost:8080/rices/${rice.id}/vote?value=${value}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await api.post<number>(`/rices/${rice.id}/vote?value=${value}`);
+            setKarma(response.data);
         } catch (error) {
             console.error("Falha ao computar o voto", error);
-            // Se falhar, nós poderíamos reverter o estado aqui para garantir a integridade
+            setKarma(previousKarma);
+            setUserVote(previousVote);
         }
     };
 
@@ -70,6 +72,8 @@ export function RiceCard({ rice }: RiceCardProps) {
                     {/* Controles de Karma */}
                     <div className="flex items-center gap-1 bg-gruvbox-gray/5 rounded-full px-1">
                         <button 
+                            type="button"
+                            aria-label="Dar upvote"
                             onClick={(e) => handleVote(e, 1)}
                             className={`p-1 rounded-full transition-colors ${userVote === 1 ? 'text-gruvbox-primary bg-gruvbox-primary/20' : 'text-gruvbox-gray hover:text-gruvbox-primary hover:bg-gruvbox-gray/10'}`}
                         >
@@ -81,6 +85,8 @@ export function RiceCard({ rice }: RiceCardProps) {
                         </span>
 
                         <button 
+                            type="button"
+                            aria-label="Dar downvote"
                             onClick={(e) => handleVote(e, -1)}
                             className={`p-1 rounded-full transition-colors ${userVote === -1 ? 'text-gruvbox-blue bg-gruvbox-blue/20' : 'text-gruvbox-gray hover:text-gruvbox-blue hover:bg-gruvbox-gray/10'}`}
                         >
@@ -91,7 +97,7 @@ export function RiceCard({ rice }: RiceCardProps) {
                     {/* Contador de Comentários */}
                     <div className="flex items-center gap-2 text-gruvbox-gray text-sm font-mono hover:text-gruvbox-fg transition-colors">
                         <MessageSquare size={16} />
-                        <span>{rice.comments?.length || 0}</span>
+                        <span>{rice.commentCount ?? rice.comments?.length ?? 0}</span>
                     </div>
 
                 </div>

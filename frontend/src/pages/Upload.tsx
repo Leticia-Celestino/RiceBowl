@@ -31,6 +31,8 @@ export function Upload() {
         setError('');
         setIsLoading(true);
 
+        let createdRiceId: string | null = null;
+
         try {
             const tagsArray = tagsText.split(',').map(tag => tag.trim()).filter(Boolean);
             
@@ -43,7 +45,8 @@ export function Upload() {
                 tags: tagsArray
             });
             
-            const riceId = riceResponse.data.id;
+            const riceId: string = riceResponse.data.id;
+            createdRiceId = riceId;
 
             // 2. Envio da imagem de capa (Multipart)
             if (coverFile) {
@@ -67,6 +70,13 @@ export function Upload() {
             navigate('/');
             
         } catch {
+            if (createdRiceId) {
+                try {
+                    await api.delete(`/rices/${createdRiceId}`);
+                } catch {
+                    console.error('Não foi possível remover a publicação incompleta.');
+                }
+            }
             setError('Erro ao enviar os dados. Verifique a conexão com o servidor e o tamanho dos arquivos.');
         } finally {
             setIsLoading(false);
@@ -135,6 +145,7 @@ export function Upload() {
                                 <input 
                                     type="file" 
                                     accept="image/*" 
+                                    required
                                     className="hidden" 
                                     onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
                                 />
@@ -149,6 +160,7 @@ export function Upload() {
                                 <input 
                                     type="file" 
                                     accept=".tar.gz,.zip" 
+                                    required
                                     className="hidden" 
                                     onChange={(e) => setConfigFile(e.target.files?.[0] || null)}
                                 />

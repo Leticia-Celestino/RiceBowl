@@ -18,6 +18,7 @@ export interface RiceDTO {
     createdAt: string;
     karma: number;
     comments?: CommentDTO[]; 
+    commentCount?: number;
 }
 
 export interface PageResponse<T> {
@@ -34,4 +35,3 @@ export interface CommentDTO {
     authorNickname: string;
     createdAt: string;
 }
-

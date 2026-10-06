@@ -3,6 +3,7 @@ import { Search, Filter } from 'lucide-react';
 import { RiceCard } from '../components/ui/RiceCard';
 import { RiceModal } from '../components/ui/RiceModal';
 import type { RiceDTO, PageResponse } from '../types/rice';
+import { api } from '../config/api';
 
 export function Home() {
     const [rices, setRices] = useState<RiceDTO[]>([]);
@@ -11,33 +12,40 @@ export function Home() {
     const [search, setSearch] = useState('');
     const [distroFilter, setDistroFilter] = useState('');
     const [wmFilter, setWmFilter] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         const controller = new AbortController();
 
         const fetchRices = async () => {
             try {
-                const token = localStorage.getItem('token');
                 const params = new URLSearchParams();
                 
                 if (search.trim()) params.append('search', search.trim());
                 if (distroFilter.trim()) params.append('distro', distroFilter.trim());
                 if (wmFilter.trim()) params.append('windowManager', wmFilter.trim());
+                params.append('page', String(page));
 
-                const response = await fetch(`http://localhost:8080/rices?${params.toString()}`, {
+                setIsLoading(true);
+                setError('');
+                const response = await api.get<PageResponse<RiceDTO>>(`/rices?${params.toString()}`, {
                     signal: controller.signal,
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
-
-                if (response.ok) {
-                    const data: PageResponse<RiceDTO> = await response.json();
-                    setRices(data.content);
-                } else {
-                    console.error("Erro na API. Status:", response.status);
-                }
+                setRices(current => page === 0
+                    ? response.data.content
+                    : [...current, ...response.data.content.filter(item => !current.some(existing => existing.id === item.id))]);
+                setTotalPages(response.data.totalPages);
             } catch (error) {
-                if ((error as DOMException).name !== 'AbortError') {
+                if ((error as Error).name !== 'CanceledError') {
                     console.error("Erro de conexão ao buscar setups:", error);
+                    setError('Não foi possível carregar o feed. Tente novamente em instantes.');
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setIsLoading(false);
                 }
             }
         };
@@ -51,7 +59,12 @@ export function Home() {
             clearTimeout(delayDebounceFn); // Cancela o timer se o usuário digitar algo novo
             controller.abort(); // Cancela a requisição fantasma
         };
-    }, [search, distroFilter, wmFilter]);
+    }, [search, distroFilter, wmFilter, page]);
+
+    const updateSearch = (value: string) => {
+        setPage(0);
+        setSearch(value);
+    };
 
     return (
         <div className="flex flex-col gap-6 p-6 h-full overflow-y-auto w-full relative">
@@ -63,7 +76,7 @@ export function Home() {
                         type="text" 
                         placeholder="Busque por título ou descrição..." 
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => updateSearch(e.target.value)}
                         className="w-full bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-10 pr-4 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans"
                     />
                 </div>
@@ -73,7 +86,7 @@ export function Home() {
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
                         <select 
                             value={distroFilter}
-                            onChange={(e) => setDistroFilter(e.target.value)}
+                            onChange={(e) => { setPage(0); setDistroFilter(e.target.value); }}
                             className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
                         >
                             <option value="">Qualquer Distro</option>
@@ -89,7 +102,7 @@ export function Home() {
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gruvbox-gray" size={16} />
                         <select 
                             value={wmFilter}
-                            onChange={(e) => setWmFilter(e.target.value)}
+                            onChange={(e) => { setPage(0); setWmFilter(e.target.value); }}
                             className="w-full appearance-none bg-gruvbox-bg border border-gruvbox-gray/30 rounded-md pl-9 pr-8 py-2 text-sm text-gruvbox-fg focus:outline-none focus:border-gruvbox-primary transition-colors font-sans cursor-pointer"
                         >
                             <option value="">Qualquer WM/DE</option>
@@ -103,7 +116,11 @@ export function Home() {
                 </div>
             </div>
 
-            {rices.length === 0 ? (
+            {isLoading ? (
+                <div className="text-center py-20 text-gruvbox-gray font-mono animate-pulse">Carregando rices...</div>
+            ) : error ? (
+                <div role="alert" className="text-center py-20 text-gruvbox-error font-mono">{error}</div>
+            ) : rices.length === 0 ? (
                 <div className="text-center py-20 text-gruvbox-gray font-mono">
                     Nenhum setup encontrado para estes filtros.
                 </div>
@@ -120,6 +137,16 @@ export function Home() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {!isLoading && !error && page + 1 < totalPages && (
+                <button
+                    type="button"
+                    onClick={() => setPage(current => current + 1)}
+                    className="self-center px-5 py-2 rounded-md border border-gruvbox-primary/40 text-gruvbox-primary font-mono hover:bg-gruvbox-primary/10"
+                >
+                    Carregar mais
+                </button>
             )}
 
             {selectedRice && (

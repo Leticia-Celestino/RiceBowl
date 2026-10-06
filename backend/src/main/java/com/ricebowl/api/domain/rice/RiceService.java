@@ -1,6 +1,7 @@
 package com.ricebowl.api.domain.rice;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ricebowl.api.domain.file.FileService;
 import com.ricebowl.api.domain.rice.dto.CommentDTO;
+import com.ricebowl.api.domain.rice.dto.CommentResponseDTO;
 import com.ricebowl.api.domain.rice.dto.RiceCreateDTO;
 import com.ricebowl.api.domain.rice.dto.RiceDetailDTO;
+import com.ricebowl.api.domain.rice.dto.RiceSummaryDTO;
 import com.ricebowl.api.domain.tag.Tag;
 import com.ricebowl.api.domain.tag.TagRepository;
 import com.ricebowl.api.domain.user.User;
@@ -50,11 +53,13 @@ public class RiceService {
         return new RiceDetailDTO(rice);
     }
 
-    public Page<RiceDetailDTO> findAll(String search, String distro, String windowManager, String author, Pageable pageable) {
+    @Transactional(readOnly = true)
+    public Page<RiceSummaryDTO> findAll(String search, String distro, String windowManager, String author, Pageable pageable) {
         return riceRepository.searchRices(search, distro, windowManager, author, pageable)
-                .map(RiceDetailDTO::new);
+                .map(RiceSummaryDTO::new);
     }
 
+    @Transactional(readOnly = true)
     public RiceDetailDTO findById(java.util.UUID id) {
         var rice = riceRepository.findById(id)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
@@ -70,6 +75,9 @@ public class RiceService {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission to delete this rice");
         }
 
+        fileService.deleteByUrl(rice.getCoverUrl());
+        fileService.deleteByUrl(rice.getConfigUrl());
+        rice.getGallery().forEach(image -> fileService.deleteByUrl(image.getUrl()));
         riceRepository.delete(rice);
     }
 
@@ -82,8 +90,10 @@ public class RiceService {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
         }
 
-        String coverUrl = fileService.upload(file);
+        String previousCover = rice.getCoverUrl();
+        String coverUrl = fileService.uploadImage(file);
         rice.setCoverUrl(coverUrl);
+        fileService.deleteByUrl(previousCover);
         
         return new RiceDetailDTO(rice);
     }
@@ -97,8 +107,10 @@ public class RiceService {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
         }
 
-        String configUrl = fileService.upload(file);
+        String previousConfig = rice.getConfigUrl();
+        String configUrl = fileService.uploadArchive(file);
         rice.setConfigUrl(configUrl);
+        fileService.deleteByUrl(previousConfig);
         
         return new RiceDetailDTO(rice);
     }
@@ -112,7 +124,7 @@ public class RiceService {
             throw new org.springframework.security.access.AccessDeniedException("You don't have permission to modify this rice");
         }
 
-        String imageUrl = fileService.upload(file);
+        String imageUrl = fileService.uploadImage(file);
 
         RiceImage novaImagem = new RiceImage();
         novaImagem.setRice(rice);
@@ -126,6 +138,10 @@ public class RiceService {
 
     @Transactional
     public Long voteRice(UUID riceId, Short value, User user) {
+        if (value == null || (value != 1 && value != -1)) {
+            throw new IllegalArgumentException("Vote value must be 1 or -1");
+        }
+
         Rice rice = riceRepository.findById(riceId)
             .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
@@ -153,15 +169,27 @@ public class RiceService {
     }
 
     @Transactional
-    public void addComment(UUID riceId, CommentDTO dto, User user) {
+    public CommentResponseDTO addComment(UUID riceId, CommentDTO dto, User user) {
         Rice rice = riceRepository.findById(riceId)
             .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Rice not found"));
 
         Comment comment = new Comment();
-        comment.setContent(dto.content());
+        comment.setContent(dto.content().trim());
         comment.setRice(rice);
         comment.setAuthor(user);
         
-        commentRepository.save(comment);
+        return new CommentResponseDTO(commentRepository.save(comment));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentResponseDTO> listComments(UUID riceId) {
+        if (!riceRepository.existsById(riceId)) {
+            throw new jakarta.persistence.EntityNotFoundException("Rice not found");
+        }
+
+        return commentRepository.findByRiceIdOrderByCreatedAtAsc(riceId)
+                .stream()
+                .map(CommentResponseDTO::new)
+                .toList();
     }
 }

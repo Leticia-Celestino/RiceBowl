@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Search, Terminal, FileCode, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/auth/useAuth';
 
-const ACTIONS = [
+const BASE_ACTIONS = [
     { id: 'upload', label: 'Executar upload_rice.sh', icon: Terminal, route: '/upload', color: 'text-gruvbox-primary' },
     { id: 'explore', label: 'Explorar dotfiles', icon: FileCode, route: '/explore', color: 'text-gruvbox-accent' },
-    { id: 'profile', label: 'Acessar /home/user', icon: User, route: '/profile', color: 'text-gruvbox-blue' },
 ];
 
 export function CommandPalette() {
@@ -13,8 +13,13 @@ export function CommandPalette() {
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const navigate = useNavigate();
+    const user = useAuth(state => state.user);
+    const actions = [
+        ...BASE_ACTIONS,
+        { id: 'profile', label: 'Acessar /home/user', icon: User, route: user ? `/profile/${user.nickname}` : '/login', color: 'text-gruvbox-blue' },
+    ];
 
-    const filteredActions = ACTIONS.filter(action =>
+    const filteredActions = actions.filter(action =>
         action.label.toLowerCase().includes(query.toLowerCase())
     );
 

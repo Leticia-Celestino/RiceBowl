@@ -1,64 +1,95 @@
-# { R } RiceBowl 🍚
+# RiceBowl
 
-![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-warning?style=for-the-badge&color=D79921)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-F2F4F9?style=for-the-badge&logo=spring-boot)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+RiceBowl é uma plataforma em estágio **alpha** para descobrir e compartilhar customizações de desktops Linux junto aos respectivos dotfiles.
 
-A rede social definitiva para a comunidade de customização Linux (Ricing). Um espaço minimalista e de alta performance para compartilhar setups, debater configurações de Window Managers e hospedar dotfiles.
+O MVP atual oferece cadastro e login, feed pesquisável, filtros por distro e WM/DE, perfis públicos, publicação com capa e arquivo de configuração, votos, comentários e download dos dotfiles.
 
-Desenvolvido com uma estética **Glassmorphism** e fortemente inspirado na paleta de cores **Gruvbox**.
+> O pipeline de análise de arquivos ainda está no roadmap. Não use a versão atual para hospedar uploads não confiáveis em produção.
 
----
+## Stack
 
-## ✨ O Estado Atual do Projeto
+- React 19, TypeScript, Vite e Tailwind CSS 4
+- Java 21 e Spring Boot 4
+- PostgreSQL 16 e Flyway
+- storage local desacoplado por interface
+- Docker Compose
 
-O RiceBowl encontra-se em um estágio funcional e maduro (Fase 5 de desenvolvimento), contando com uma arquitetura robusta de Back-end (API REST) e um Front-end dinâmico. As seguintes funcionalidades já estão em produção:
+## Executar com Docker
 
-### 🎨 Interface e Experiência (Front-end)
-- **Vitrine Pública (Feed):** Layout no estilo *Masonry* (Pinterest-like), renderizando os setups sem cortes nas imagens.
-- **Motor de Busca Responsivo:** Barra de pesquisa em tempo real com *debounce* (300ms) para otimização de chamadas à API, além de filtros combinados por Distro (Arch, Ubuntu, etc.) e Window Manager/DE (Hyprland, i3wm, GNOME).
-- **Perfis de Usuário (`/profile/:nickname`):** Páginas dinâmicas atuando como portfólio pessoal, exibindo bio, contagem total de Setups e soma de **Karma** recebido.
-- **Painel de Controle do Dono:** Identificação inteligente de sessão. O usuário logado visualiza opções administrativas (Editar/Deletar) apenas nos posts de sua autoria.
-- **Sistema de Comentários em Tempo Real:** Atualizações otimistas da UI ao enviar comentários em um setup usando *Derived State* para performance.
-- **Design System Consistente:** Componentização completa usando Tailwind CSS (tags, botões, inputs e modais translúcidos).
+Requisitos: Docker com Compose v2.
 
-### ⚙️ Engenharia e Dados (Back-end)
-- **Segurança JWT:** Sistema de autenticação via token JWT, com rotas públicas abertas para visitantes (`GET /rices`, `GET /users`) e bloqueio em rotas de mutação (`POST`, `DELETE`).
-- **Paginação e Ordenação:** Consultas JPQL otimizadas para retornar *Pages* de DTOs, poupando banda e memória.
-- **Versionamento de Banco de Dados:** Flyway configurado e gerenciando a evolução do *schema* relacional de forma segura e incremental (ex: adição dinâmica de colunas `avatar_url` e `bio`).
-- **Tratamento de Exceções Global:** API blindada contra requisições malformadas e buscas por entidades inexistentes.
+```bash
+cp .env.example .env
+docker compose up --build
+```
 
----
+Serviços:
 
-## 🛠️ Tecnologias Utilizadas
+- Web: <http://localhost:5173>
+- API: <http://localhost:8080>
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+O Compose cria automaticamente volumes persistentes para o banco e para os uploads.
 
-**Front-end (React + Vite):**
-* TypeScript
-* Tailwind CSS (Customizado com paleta Gruvbox)
-* React Router DOM (Roteamento aninhado e layouts)
-* Lucide React (Ícones minimalistas)
+## Desenvolvimento sem containers da aplicação
 
-**Back-end (Java 21 + Spring Boot 3):**
-* Spring Web & RESTful APIs
-* Spring Security (Filtro JWT Stateless)
-* Spring Data JPA & Hibernate
-* Flyway (Migrations de Banco de Dados)
-* Lombok (Redução de Boilerplate)
+Suba apenas as dependências:
 
-**Infraestrutura:**
-* PostgreSQL 16 (Banco de Dados Relacional)
-* Docker & Docker Compose (Containerização do BD e MinIO)
+```bash
+docker compose up postgres
+```
 
----
+Backend:
 
-## 🚀 Próximos Passos (Roadmap)
+```bash
+cd backend
+./mvnw spring-boot:run
+```
 
-Embora a espinha dorsal esteja pronta, as próximas atualizações trarão o polimento final à plataforma:
+Frontend:
 
-- [ ] **Fluxo de Deleção/Edição:** Ativar os botões do painel do usuário para realizar soft/hard deletes e atualizações de metadados dos Rices.
-- [ ] **Edição de Perfil:** Permitir que o usuário edite sua Biografia e faça upload de um Avatar customizado (integração via MinIO).
-- [ ] **Carrossel de Galeria:** Expandir a entidade de imagens para suportar múltiplos *screenshots* por postagem no modal de visualização.
-- [ ] **Upload de Dotfiles (UI):** Desenvolver a tela final de criação (`/upload`), suportando envio simultâneo de imagens e arquivos compactados (`.tar.gz`/`.zip`).
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
----
+## Verificação
+
+```bash
+cd frontend && npm run lint && npm run build
+cd ../backend && ./mvnw verify
+```
+
+Os testes do backend usam H2 em memória e não exigem um PostgreSQL local. Testes de integração PostgreSQL com Testcontainers estão planejados.
+
+## Estado atual
+
+Funcional:
+
+- autenticação JWT e cadastro;
+- feed público com busca, filtros e paginação incremental;
+- perfis e rices por autor;
+- upload validado de imagem e arquivo ZIP/TAR;
+- votos com rollback visual em falha;
+- comentários públicos e autenticados para escrita;
+- exclusão do rice pelo autor;
+- ambiente completo por Docker Compose;
+- CI para frontend, backend e configuração Compose.
+
+Planejado:
+
+- edição de perfil e publicação;
+- página permanente e galeria completa;
+- forks/remixes e lineage;
+- análise de segredos, manifesto e quarentena de uploads;
+- integração com Reddit e repositórios Git;
+- responsividade e rebranding.
+
+Veja [docs/ISSUES.md](docs/ISSUES.md) para tickets priorizados e [docs/BACKLOG.md](docs/BACKLOG.md) para a visão resumida.
+
+## Contribuição e segurança
+
+- [Guia de contribuição](CONTRIBUTING.md)
+- [Política de segurança](SECURITY.md)
+
+Antes de publicar dotfiles, revise o pacote e remova tokens, chaves, cookies, histórico e dados pessoais.

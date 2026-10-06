@@ -4,7 +4,6 @@ import com.ricebowl.api.domain.tag.Tag;
 import com.ricebowl.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,8 +34,8 @@ public class Rice {
     private String coverUrl;
     private String configUrl;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -63,4 +62,7 @@ public class Rice {
     @OneToMany(mappedBy = "rice", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("createdAt ASC")
     private java.util.List<Comment> comments = new java.util.ArrayList<>();
+
+    @org.hibernate.annotations.Formula("(SELECT COUNT(c.id) FROM comments c WHERE c.rice_id = id)")
+    private Long commentCount;
 }

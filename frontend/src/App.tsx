@@ -6,9 +6,7 @@ import { Upload } from './pages/Upload';
 import { Profile } from './pages/Profile';
 import { CommandPalette } from './components/ui/CommandPalette'; 
 import { FastfetchBoot } from './components/ui/FastfetchBoot';
-
-
-const ExplorePlaceholder = () => <div className="text-gruvbox-primary font-mono text-xl">$ grep -r "minimalist" /rices</div>;
+import { RequireAuth } from './features/auth/RequireAuth';
 
 function App() {
   return (
@@ -19,8 +17,10 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<ExplorePlaceholder />} />
-          <Route path="/upload" element={<Upload />} /> 
+          <Route path="/explore" element={<Home />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/upload" element={<Upload />} />
+          </Route>
           {/* Mude aqui para capturar o nickname */}
           <Route path="/profile/:nickname" element={<Profile />} /> 
         </Route>

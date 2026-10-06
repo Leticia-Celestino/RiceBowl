@@ -1,10 +1,9 @@
 package com.ricebowl.api.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,37 +17,39 @@ import com.ricebowl.api.domain.user.dto.RegisterDTO;
 import com.ricebowl.api.infra.security.TokenService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthenticationController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private UserRepository repository;
-
-    @Autowired
-    private TokenService tokenService;
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository repository;
+    private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
-        var token = tokenService.generateToken((User) auth.getPrincipal());
+        User user = (User) auth.getPrincipal();
+        var token = tokenService.generateToken(user);
+        var responseUser = new com.ricebowl.api.domain.user.dto.UserResponseDTO(
+                user.getId(), user.getNickname(), user.getEmail(), user.getBio());
 
-        return ResponseEntity.ok(new LoginResponseDTO(token));
+        return ResponseEntity.ok(new LoginResponseDTO(token, responseUser));
     }
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data) {
-        if (this.repository.findByEmail(data.email()) != null) {
+        if (this.repository.existsByEmailIgnoreCase(data.email())
+                || this.repository.existsByNicknameIgnoreCase(data.nickname())) {
             return ResponseEntity.badRequest().build();
         }
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
+        String encryptedPassword = passwordEncoder.encode(data.password());
         User newUser = new User(data.nickname(), data.email(), encryptedPassword);
 
         this.repository.save(newUser);

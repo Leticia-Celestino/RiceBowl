@@ -12,6 +12,8 @@ export function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [nickname, setNickname] = useState('');
     
     const navigate = useNavigate();
     const { login } = useAuth();
@@ -22,14 +24,18 @@ export function Login() {
         setIsLoading(true);
 
         try {
+            if (isRegistering) {
+                await api.post('/auth/register', { nickname, email, password });
+            }
             const response = await api.post('/auth/login', { email, password });
-            const token = response.data.token;
-            
-            login(token, { id: '1', email, nickname: 'leticia' });
+            const { token, user } = response.data;
+            login(token, user);
             navigate('/');
         } catch {
             // Apenas removemos o (err) daqui!
-            setError('Credenciais inválidas. O RiceBowl negou o acesso.');
+            setError(isRegistering
+                ? 'Não foi possível criar a conta. Verifique os dados e tente outro e-mail ou nickname.'
+                : 'Credenciais inválidas. O RiceBowl negou o acesso.');
         } finally {
             setIsLoading(false);
         }
@@ -41,10 +47,22 @@ export function Login() {
                 
                 <div className="flex items-center gap-3 border-b border-gruvbox-gray/20 pb-4">
                     <Terminal className="text-gruvbox-primary" size={24} />
-                    <h1 className="text-xl font-sans font-bold text-gruvbox-fg">Autenticação</h1>
+                    <h1 className="text-xl font-sans font-bold text-gruvbox-fg">{isRegistering ? 'Criar conta' : 'Autenticação'}</h1>
                 </div>
 
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                    {isRegistering && (
+                        <Input
+                            label="Nickname"
+                            type="text"
+                            placeholder="seu_usuario"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            minLength={3}
+                            maxLength={50}
+                            required
+                        />
+                    )}
                     <Input 
                         label="E-mail do sistema" 
                         type="email" 
@@ -77,10 +95,18 @@ export function Login() {
                             icon={<Upload size={16} />} 
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Iniciando...' : 'Iniciar Sessão'}
+                            {isLoading ? 'Processando...' : isRegistering ? 'Criar e entrar' : 'Iniciar Sessão'}
                         </Button>
                     </div>
                 </form>
+
+                <button
+                    type="button"
+                    onClick={() => { setIsRegistering(value => !value); setError(''); }}
+                    className="text-sm font-mono text-gruvbox-primary hover:underline"
+                >
+                    {isRegistering ? 'Já tenho uma conta' : 'Ainda não tenho uma conta'}
+                </button>
 
             </GlassPanel>
         </div>
