@@ -1,3 +1,10 @@
+resolver ${DNS_RESOLVER} valid=10s;
+
+upstream api_backend {
+    zone api_backend 64k;
+    server ${API_UPSTREAM_HOST}:${API_UPSTREAM_PORT} resolve;
+}
+
 server {
     listen ${PORT};
     server_name _;
@@ -12,7 +19,7 @@ server {
     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
 
     location /api/ {
-        proxy_pass ${API_UPSTREAM}/;
+        proxy_pass http://api_backend/;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -20,7 +27,7 @@ server {
     }
 
     location /uploads/ {
-        proxy_pass ${API_UPSTREAM};
+        proxy_pass http://api_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
