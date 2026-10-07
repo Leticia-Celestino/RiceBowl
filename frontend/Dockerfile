@@ -7,7 +7,7 @@ ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30.5-alpine3.24
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY 15-dns-resolver.envsh /docker-entrypoint.d/15-dns-resolver.envsh
 RUN chmod 755 /docker-entrypoint.d/15-dns-resolver.envsh
