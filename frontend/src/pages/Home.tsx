@@ -1,116 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, Compass, Plus, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { RiceModal } from '../features/rices/components/RiceModal';
-import type { RiceDTO, PageResponse } from '../types/rice';
-import { api } from '../config/api';
-import { PageState } from '../components/ui/PageState';
-import { RiceFilters } from '../features/rices/components/RiceFilters';
 import { RiceGrid } from '../features/rices/components/RiceGrid';
+import { PageState } from '../components/ui/PageState';
+import { api } from '../config/api';
+import type { PageResponse, RiceDTO } from '../types/rice';
 
 export function Home() {
     const [rices, setRices] = useState<RiceDTO[]>([]);
     const [selectedRice, setSelectedRice] = useState<RiceDTO | null>(null);
-    
-    const [search, setSearch] = useState('');
-    const [distroFilter, setDistroFilter] = useState('');
-    const [wmFilter, setWmFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         const controller = new AbortController();
-
-        const fetchRices = async () => {
-            try {
-                const params = new URLSearchParams();
-                
-                if (search.trim()) params.append('search', search.trim());
-                if (distroFilter.trim()) params.append('distro', distroFilter.trim());
-                if (wmFilter.trim()) params.append('windowManager', wmFilter.trim());
-                params.append('page', String(page));
-
-                setIsLoading(true);
-                setError('');
-                const response = await api.get<PageResponse<RiceDTO>>(`/rices?${params.toString()}`, {
-                    signal: controller.signal,
-                });
-                setRices(current => page === 0
-                    ? response.data.content
-                    : [...current, ...response.data.content.filter(item => !current.some(existing => existing.id === item.id))]);
-                setTotalPages(response.data.totalPages);
-            } catch (error) {
-                if ((error as Error).name !== 'CanceledError') {
-                    console.error("Erro de conexão ao buscar setups:", error);
-                    setError('Não foi possível carregar o feed. Tente novamente em instantes.');
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setIsLoading(false);
-                }
-            }
-        };
-
-        const delayDebounceFn = setTimeout(() => {
-            void fetchRices();
-        }, 300);
-
-        return () => {
-            clearTimeout(delayDebounceFn);
-            controller.abort();
-        };
-    }, [search, distroFilter, wmFilter, page]);
-
-    const updateSearch = (value: string) => {
-        setPage(0);
-        setSearch(value);
-    };
+        api.get<PageResponse<RiceDTO>>('/rices?page=0', { signal: controller.signal })
+            .then(response => setRices(response.data.content.slice(0, 6)))
+            .catch(requestError => { if ((requestError as Error).name !== 'CanceledError') setError('Não foi possível carregar os destaques.'); })
+            .finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
+        return () => controller.abort();
+    }, []);
 
     return (
-        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-8 px-5 py-8 sm:px-10 sm:py-12">
-            <header className="max-w-4xl py-5 sm:py-10">
-                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gruvbox-primary">Galeria da comunidade</p>
-                <h1 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-[-0.055em] text-gruvbox-fg sm:text-6xl">
-                    Desktops Linux que valem a pena estudar.
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-relaxed text-gruvbox-gray sm:text-lg">
-                    Explore escolhas visuais, ferramentas e dotfiles compartilhados por quem gosta de construir o próprio ambiente.
-                </p>
-            </header>
-
-            <RiceFilters
-                search={search}
-                distro={distroFilter}
-                windowManager={wmFilter}
-                onSearchChange={updateSearch}
-                onDistroChange={(value) => { setPage(0); setDistroFilter(value); }}
-                onWindowManagerChange={(value) => { setPage(0); setWmFilter(value); }}
-            />
-
-            {isLoading ? (
-                <PageState loading>Carregando rices...</PageState>
-            ) : error ? (
-                <PageState tone="error">{error}</PageState>
-            ) : rices.length === 0 ? (
-                <PageState>Nenhum setup encontrado para estes filtros.</PageState>
-            ) : (
-                <RiceGrid rices={rices} onSelect={setSelectedRice} />
-            )}
-
-            {!isLoading && !error && page + 1 < totalPages && (
-                <button
-                    type="button"
-                    onClick={() => setPage(current => current + 1)}
-                    className="self-center px-5 py-2 rounded-md border border-gruvbox-primary/40 text-gruvbox-primary font-mono hover:bg-gruvbox-primary/10"
-                >
-                    Carregar mais
-                </button>
-            )}
-
-            {selectedRice && (
-                <RiceModal rice={selectedRice} onClose={() => setSelectedRice(null)} />
-            )}
-            
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-12 px-5 py-8 sm:px-10 sm:py-12">
+            <section className="relative overflow-hidden rounded-[2rem] border border-gruvbox-primary/20 bg-gruvbox-panel/55 p-7 shadow-[0_30px_100px_rgb(0_0_0_/_0.2)] sm:p-12">
+                <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-gruvbox-primary/10 blur-3xl" />
+                <div className="relative max-w-3xl">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-gruvbox-primary/25 bg-gruvbox-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em] text-gruvbox-primary"><Sparkles size={13} /> Comunidade Linux</span>
+                    <h1 className="mt-6 text-4xl font-semibold leading-[1.02] tracking-[-0.06em] text-gruvbox-fg sm:text-7xl">Seu desktop é uma história. <span className="text-gruvbox-primary">Compartilhe a montagem.</span></h1>
+                    <p className="mt-6 max-w-2xl text-base leading-relaxed text-gruvbox-gray sm:text-lg">RiceBowl é o lugar para descobrir setups, aprender com dotfiles e guardar as escolhas que fazem seu ambiente ser seu.</p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <Link to="/explore" className="inline-flex items-center gap-2 rounded-xl bg-gruvbox-primary px-5 py-3 text-sm font-semibold text-gruvbox-bg transition-transform hover:-translate-y-0.5">Explorar setups <ArrowRight size={17} /></Link>
+                        <Link to="/upload" className="inline-flex items-center gap-2 rounded-xl border border-gruvbox-gray/25 px-5 py-3 text-sm font-semibold text-gruvbox-fg hover:bg-gruvbox-gray/10"><Plus size={17} /> Publicar o meu</Link>
+                    </div>
+                </div>
+            </section>
+            <section className="space-y-5" aria-labelledby="recentes-title">
+                <div className="flex items-end justify-between gap-4">
+                    <div><p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gruvbox-accent">Agora na comunidade</p><h2 id="recentes-title" className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-gruvbox-fg">Publicações recentes</h2></div>
+                    <Link to="/explore" className="hidden items-center gap-2 text-sm text-gruvbox-primary hover:underline sm:inline-flex">Ver tudo <Compass size={16} /></Link>
+                </div>
+                {isLoading ? <PageState loading>Carregando destaques...</PageState> : error ? <PageState tone="error">{error}</PageState> : rices.length ? <RiceGrid rices={rices} onSelect={setSelectedRice} /> : <PageState>A comunidade ainda está preparando os primeiros setups.</PageState>}
+            </section>
+            {selectedRice && <RiceModal rice={selectedRice} onClose={() => setSelectedRice(null)} />}
         </div>
     );
 }

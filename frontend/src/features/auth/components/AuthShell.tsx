@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { BrandLogo } from '../../../components/ui/BrandLogo';
 
 interface AuthShellProps {
     eyebrow: string;
@@ -15,8 +16,7 @@ export function AuthShell({ eyebrow, title, description, children }: AuthShellPr
             <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-gruvbox-gray/15 bg-gruvbox-panel/35 shadow-2xl sm:min-h-[calc(100vh-4rem)] lg:grid-cols-[1.1fr_0.9fr]">
                 <section className="brand-grid relative hidden overflow-hidden border-r border-gruvbox-gray/15 p-12 lg:flex lg:flex-col lg:justify-between">
                     <Link to="/" className="relative z-10 inline-flex items-center gap-3 text-gruvbox-fg">
-                        <span className="brand-mark">R</span>
-                        <span className="text-lg font-bold tracking-[-0.03em]">RiceBowl</span>
+                        <BrandLogo className="text-gruvbox-primary" />
                     </Link>
                     <div className="relative z-10 max-w-xl">
                         <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-gruvbox-primary/25 bg-gruvbox-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em] text-gruvbox-primary">

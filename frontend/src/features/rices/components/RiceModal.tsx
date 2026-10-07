@@ -140,9 +140,10 @@ export function RiceModal({ rice, onClose }: RiceModalProps) {
                 <div className="flex flex-col md:flex-row h-full overflow-hidden">
                     <div className="md:w-[55%] bg-gruvbox-bg/30 border-b md:border-b-0 md:border-r border-gruvbox-gray/20 overflow-y-auto">
                         <img
-                            src={rice.coverUrl || '/no_cover.png'}
+                            src={rice.coverUrl || '/favicon.svg'}
                             alt={rice.title}
                             className="w-full h-auto object-contain"
+                            onError={(event) => { event.currentTarget.src = '/favicon.svg'; }}
                         />
                     </div>
 

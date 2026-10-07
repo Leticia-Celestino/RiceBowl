@@ -25,7 +25,8 @@ export function CommandPalette() {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            const isSearchShortcut = (e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k' || e.code === 'Space');
+            if (isSearchShortcut) {
                 e.preventDefault();
                 setIsOpen((prev) => !prev);
                 setQuery('');
@@ -42,6 +43,7 @@ export function CommandPalette() {
 
 
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
+        if (filteredActions.length === 0) return;
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             setSelectedIndex((prev) => (prev + 1) % filteredActions.length);
@@ -83,9 +85,12 @@ export function CommandPalette() {
                         onChange={handleSearchChange} 
                         onKeyDown={handleInputKeyDown}
                     />
-                    <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-gruvbox-gray/10 rounded font-mono text-[10px] text-gruvbox-gray">
-                        ESC
-                    </kbd>
+                    <div className="hidden items-center gap-1 sm:flex">
+                        <kbd className="rounded bg-gruvbox-gray/10 px-2 py-1 font-mono text-[10px] text-gruvbox-gray">SUPER</kbd>
+                        <span className="text-xs text-gruvbox-gray/60">+</span>
+                        <kbd className="rounded bg-gruvbox-gray/10 px-2 py-1 font-mono text-[10px] text-gruvbox-gray">SPACE</kbd>
+                    </div>
+                    <kbd className="rounded bg-gruvbox-gray/10 px-2 py-1 font-mono text-[10px] text-gruvbox-gray">ESC</kbd>
                 </div>
 
                 <div className="max-h-96 overflow-y-auto p-2">

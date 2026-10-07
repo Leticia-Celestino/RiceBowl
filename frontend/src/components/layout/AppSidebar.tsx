@@ -1,7 +1,8 @@
-import { Compass, Home, LogOut, Plus, Settings } from 'lucide-react';
+import { Compass, Home, LogOut, Plus, Search, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/useAuth';
 import { Avatar } from '../ui/Avatar';
+import { BrandLogo } from '../ui/BrandLogo';
 
 const navItems = [
     { icon: Home, label: 'Home', path: '/' },
@@ -15,12 +16,11 @@ export function AppSidebar() {
 
     return (
         <aside className="fixed inset-x-3 bottom-3 z-40 flex h-16 items-center justify-between rounded-2xl border border-gruvbox-gray/15 bg-gruvbox-panel/90 px-3 shadow-2xl backdrop-blur-xl sm:inset-y-0 sm:left-0 sm:right-auto sm:h-auto sm:w-64 sm:flex-col sm:items-stretch sm:rounded-none sm:border-y-0 sm:border-l-0 sm:px-0 sm:py-7 sm:shadow-none">
-            <Link to="/" className="hidden items-center gap-3 px-6 sm:flex" aria-label="RiceBowl — início">
-                <span className="brand-mark">R</span>
-                <span className="text-lg font-bold tracking-[-0.04em]">RiceBowl</span>
+            <Link to="/" className="hidden px-6 sm:flex" aria-label="RiceBowl — início">
+                <BrandLogo className="text-gruvbox-primary" />
             </Link>
 
-            <nav aria-label="Navegação principal" className="flex flex-1 items-center justify-around sm:mt-14 sm:block sm:space-y-2 sm:px-4">
+            <nav aria-label="Navegação principal" className="flex flex-1 items-center justify-around sm:mt-12 sm:block sm:space-y-2 sm:px-4">
                 {navItems.map(({ icon: Icon, label, path }) => {
                     const isActive = location.pathname === path;
                     return (
@@ -39,6 +39,15 @@ export function AppSidebar() {
                         </Link>
                     );
                 })}
+                <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', metaKey: true }))}
+                    className="group flex min-w-16 flex-col items-center gap-1 rounded-xl px-3 py-2 text-gruvbox-gray transition-colors hover:bg-gruvbox-gray/10 hover:text-gruvbox-fg sm:min-w-0 sm:flex-row sm:gap-3 sm:py-3"
+                    aria-label="Abrir busca (Super + Espaço)"
+                >
+                    <Search size={20} aria-hidden="true" />
+                    <span className="text-[10px] font-medium sm:text-sm">Buscar</span>
+                </button>
             </nav>
 
             <div className="sm:mt-auto sm:px-4">

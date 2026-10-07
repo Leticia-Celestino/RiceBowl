@@ -46,10 +46,11 @@ export function RiceCard({ rice }: RiceCardProps) {
             {/* Imagem de Capa */}
             <div className="relative aspect-[16/10] w-full overflow-hidden bg-gruvbox-bg/50">
                 <img 
-                    src={rice.coverUrl || '/no_cover.png'} 
+                    src={rice.coverUrl || '/favicon.svg'} 
                     alt={rice.title}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]"
                     loading="lazy"
+                    onError={(event) => { event.currentTarget.src = '/favicon.svg'; }}
                 />
             </div>
 

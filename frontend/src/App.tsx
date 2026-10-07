@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
 import { Home } from './pages/Home';
+import { Explore } from './pages/Explore';
 import { Login } from './pages/Login'; 
 import { Upload } from './pages/Upload';
 import { Profile } from './pages/Profile';
@@ -27,7 +28,7 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
           <Route element={<RequireAuth />}>
             <Route path="/upload" element={<Upload />} />
             <Route path="/settings/security" element={<SecuritySettings />} />

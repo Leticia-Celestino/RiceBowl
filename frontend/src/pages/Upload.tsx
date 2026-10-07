@@ -79,7 +79,7 @@ export function Upload() {
     };
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto max-w-3xl space-y-6 px-5 py-8 animate-in slide-in-from-bottom-4 duration-500 sm:px-10 sm:py-12">
             
             <PageHeader icon={<Terminal size={24} />} title="upload_rice.sh" description="Publique o visual e os arquivos de configuração do seu setup." />
 
